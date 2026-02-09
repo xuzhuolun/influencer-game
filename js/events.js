@@ -57,6 +57,59 @@ const EventLibrary = {
                         type: 'neutral'
                     }
                 ]
+            },
+            {
+                title: "实验室/科研机构探访邀请",
+                description: "📱 助理消息：某高校实验室或科研机构开放日邀请科普创作者参观拍摄，可做一期「走进实验室」内容，提升专业背书。",
+                isMessage: true,
+                requirements: { minRank: "初级达人" },
+                options: [
+                    {
+                        text: "接受邀请，制作探访内容",
+                        effects: { contentQuality: 12, personaFit: 8, fans: 400, energy: -15, savings: -300 },
+                        type: 'positive'
+                    },
+                    {
+                        text: "婉拒，专注线上内容",
+                        effects: { contentQuality: 5, mood: 5 },
+                        type: 'neutral'
+                    }
+                ]
+            },
+            {
+                title: "科普大V连麦邀请",
+                description: "同领域头部科普UP主邀请你连麦做一期对谈，对方粉丝百万级，能带来大量曝光。",
+                requirements: { minRank: "中级达人" },
+                options: [
+                    {
+                        text: "接受连麦，认真准备",
+                        effects: { fans: 1200, contentQuality: 5, personaFit: 8, energy: -12 },
+                        type: 'positive'
+                    },
+                    {
+                        text: "婉拒，怕被对比",
+                        effects: { mood: -5, personaFit: 3 },
+                        type: 'neutral'
+                    }
+                ]
+            },
+            {
+                title: "科技企业科普合作",
+                description: "📱 助理转达：某科技公司想赞助你做一期产品原理科普（不硬广），报酬可观且能提升「专业」形象。",
+                isMessage: true,
+                requirements: { minRank: "高级达人" },
+                options: [
+                    {
+                        text: "接受合作，客观讲解",
+                        effects: { profit: 4000, contentQuality: 6, personaFit: 5, energy: -18 },
+                        type: 'positive'
+                    },
+                    {
+                        text: "婉拒，避免商业化争议",
+                        effects: { personaFit: 10, contentQuality: 5 },
+                        type: 'neutral'
+                    }
+                ]
             }
         ],
         negative: [
@@ -94,6 +147,39 @@ const EventLibrary = {
                         text: "默默忍受，继续创作",
                         effects: { mood: -20, personaFit: -5 },
                         type: 'negative'
+                    }
+                ]
+            },
+            {
+                title: "科普翻车：事实错误被锤",
+                description: "你某期内容中的关键数据或结论被专业人士指出错误，评论区沦陷。",
+                options: [
+                    {
+                        text: "立刻更正并致歉",
+                        effects: { fans: -150, contentQuality: -5, personaFit: 5, mood: -10 },
+                        type: 'negative'
+                    },
+                    {
+                        text: "嘴硬反驳",
+                        effects: { fans: -400, personaFit: -15, contentQuality: -10, rankProgress: -12 },
+                        type: 'negative'
+                    }
+                ]
+            },
+            {
+                title: "平台限流科普类",
+                description: "平台算法调整，科普类内容整体流量下滑，你的播放量腰斩。",
+                requirements: { minRank: "中级达人" },
+                options: [
+                    {
+                        text: "坚持更新，等风头过去",
+                        effects: { fans: -200, mood: -10, contentQuality: 5 },
+                        type: 'negative'
+                    },
+                    {
+                        text: "尝试短视频化、标题优化",
+                        effects: { fans: -50, contentQuality: -3, energy: -10 },
+                        type: 'mixed'
                     }
                 ]
             }
@@ -198,11 +284,45 @@ const EventLibrary = {
                         type: 'mixed'
                     }
                 ]
+            },
+            {
+                title: "深度长视频 vs 短平快",
+                description: "数据表明3分钟以内的科普短视频完播率更高，但你想做的主题需要10分钟才能讲清。",
+                requirements: { minRank: "初级达人" },
+                options: [
+                    {
+                        text: "坚持深度长视频",
+                        effects: { contentQuality: 10, personaFit: 8, fans: 200, rankProgress: 8 },
+                        type: 'mixed'
+                    },
+                    {
+                        text: "拆成系列短视频",
+                        effects: { fans: 600, contentQuality: 2, energy: -15, rankProgress: 5 },
+                        type: 'mixed'
+                    }
+                ]
+            },
+            {
+                title: "跨界科普选题",
+                description: "有团队建议你尝试「法律科普」「财经科普」等跨界选题，流量大但你不算专业。",
+                requirements: { minRank: "中级达人" },
+                options: [
+                    {
+                        text: "谨慎尝试，先做功课",
+                        effects: { fans: 500, contentQuality: -5, personaFit: -3, energy: -20 },
+                        type: 'mixed'
+                    },
+                    {
+                        text: "拒绝，专注本行",
+                        effects: { contentQuality: 8, personaFit: 8, rankProgress: 6 },
+                        type: 'mixed'
+                    }
+                ]
             }
         ],
         edgeTemptation: [
             {
-                title: "低俗玩梗科普诱惑",
+                title: "低俗玩谐音梗科普诱惑",
                 description: "MCN建议你用夸张表情、低俗段子包装科普，能快速涨粉破圈！数据显示这种内容播放量是正常科普的10倍...",
                 options: [
                     {
@@ -211,7 +331,7 @@ const EventLibrary = {
                         type: 'positive'
                     },
                     {
-                        text: "适度玩梗，增加趣味",
+                        text: "适度玩谐音梗，增加趣味",
                         effects: { fans: 1200, profit: 800, contentQuality: -5, personaFit: -3, rankProgress: 5 },
                         type: 'mixed'
                     },
@@ -330,6 +450,41 @@ const EventLibrary = {
                         type: 'neutral'
                     }
                 ]
+            },
+            {
+                title: "连锁品牌测评邀约",
+                description: "📱 助理消息：某连锁餐饮品牌邀请你到店测评新品，提供免费餐食+稿费，要求客观评价。",
+                isMessage: true,
+                requirements: { minRank: "中级达人" },
+                options: [
+                    {
+                        text: "接受邀约，客观测评",
+                        effects: { profit: 1500, fans: 400, personaFit: 5, energy: -12 },
+                        type: 'positive'
+                    },
+                    {
+                        text: "婉拒，避免商业感",
+                        effects: { contentQuality: 5 },
+                        type: 'neutral'
+                    }
+                ]
+            },
+            {
+                title: "美食节/市集嘉宾邀请",
+                description: "本地美食节或创意市集邀请你作为「美食推荐官」出席，现场互动+直播。",
+                requirements: { minRank: "高级达人" },
+                options: [
+                    {
+                        text: "出席活动",
+                        effects: { fans: 800, personaFit: 10, profit: 2000, energy: -18, savings: -400 },
+                        type: 'positive'
+                    },
+                    {
+                        text: "婉拒",
+                        effects: { energy: 5 },
+                        type: 'neutral'
+                    }
+                ]
             }
         ],
         negative: [
@@ -382,6 +537,23 @@ const EventLibrary = {
                     {
                         text: "继续工作，暂时忽略",
                         effects: { mood: -20, energy: -15, fans: 300, profit: 800 },
+                        type: 'negative'
+                    }
+                ]
+            },
+            {
+                title: "同行恶意差评/水军",
+                description: "某次探店后收到大量可疑差评和水军攻击，疑似竞品或未合作商家所为。",
+                requirements: { minRank: "中级达人" },
+                options: [
+                    {
+                        text: "公开澄清，用证据说话",
+                        effects: { personaFit: 8, fans: -100, mood: -10, energy: -10 },
+                        type: 'mixed'
+                    },
+                    {
+                        text: "冷处理，专注内容",
+                        effects: { fans: -200, mood: -8 },
                         type: 'negative'
                     }
                 ]
@@ -442,6 +614,40 @@ const EventLibrary = {
                     {
                         text: "追逐网红热点",
                         effects: { fans: 1000, profit: 1500, contentQuality: -5, personaFit: -8, rankProgress: -5 },
+                        type: 'mixed'
+                    }
+                ]
+            },
+            {
+                title: "直播吃播 vs 录播剪辑",
+                description: "直播吃播打赏高、互动强，但翻车风险大；录播可剪辑更稳，但收益天花板低。",
+                requirements: { minRank: "初级达人" },
+                options: [
+                    {
+                        text: "加大直播占比",
+                        effects: { profit: 1200, fans: 400, mood: -5, energy: -15 },
+                        type: 'mixed'
+                    },
+                    {
+                        text: "以录播为主，稳扎稳打",
+                        effects: { contentQuality: 8, personaFit: 6, fans: 200, rankProgress: 6 },
+                        type: 'mixed'
+                    }
+                ]
+            },
+            {
+                title: "单人吃播 vs 多人合拍",
+                description: "有同行想和你固定合拍「双人吃播」，流量可能翻倍，但要分利和协调档期。",
+                requirements: { minRank: "中级达人" },
+                options: [
+                    {
+                        text: "尝试合拍几期",
+                        effects: { fans: 700, profit: 800, energy: -18, personaFit: -3 },
+                        type: 'mixed'
+                    },
+                    {
+                        text: "坚持单人，保持独立",
+                        effects: { personaFit: 8, contentQuality: 5, rankProgress: 5 },
                         type: 'mixed'
                     }
                 ]
@@ -593,6 +799,42 @@ const EventLibrary = {
                         type: 'neutral'
                     }
                 ]
+            },
+            {
+                title: "美妆周/展会嘉宾",
+                description: "品牌方或展会邀请你作为美妆周/线下展会嘉宾，现场试色、互动。",
+                isMessage: true,
+                requirements: { minRank: "中级达人" },
+                options: [
+                    {
+                        text: "接受邀请",
+                        effects: { fans: 600, personaFit: 8, profit: 2500, energy: -15, savings: -300 },
+                        type: 'positive'
+                    },
+                    {
+                        text: "婉拒",
+                        effects: { energy: 5 },
+                        type: 'neutral'
+                    }
+                ]
+            },
+            {
+                title: "国货美妆联名邀约",
+                description: "📱 助理消息：某国货美妆品牌想和你联名推出口红/眼影盘，分成可观，但需要你参与设计和宣传。",
+                isMessage: true,
+                requirements: { minRank: "高级达人" },
+                options: [
+                    {
+                        text: "接受联名",
+                        effects: { profit: 5000, fans: 800, personaFit: 6, energy: -20, savings: -1000 },
+                        type: 'positive'
+                    },
+                    {
+                        text: "婉拒，专注内容",
+                        effects: { contentQuality: 5, personaFit: 5 },
+                        type: 'neutral'
+                    }
+                ]
             }
         ],
         negative: [
@@ -625,6 +867,40 @@ const EventLibrary = {
                         text: "删除视频，不予回应",
                         effects: { fans: -500, personaFit: -20, rankProgress: -15 },
                         type: 'negative'
+                    }
+                ]
+            },
+            {
+                title: "仿妆争议",
+                description: "你的一期仿妆被指「丑化明星」「不尊重」，粉丝和路人吵成一团。",
+                requirements: { minRank: "初级达人" },
+                options: [
+                    {
+                        text: "公开说明无恶意并致歉",
+                        effects: { fans: -150, personaFit: 5, mood: -10 },
+                        type: 'negative'
+                    },
+                    {
+                        text: "坚持创作自由，不道歉",
+                        effects: { fans: -400, personaFit: -12, rankProgress: -8 },
+                        type: 'negative'
+                    }
+                ]
+            },
+            {
+                title: "品牌合约纠纷",
+                description: "合作品牌拖欠尾款或擅自改条款，助理建议你维权或忍让。",
+                requirements: { minRank: "中级达人" },
+                options: [
+                    {
+                        text: "走法律/平台维权",
+                        effects: { savings: 2000, mood: -15, energy: -20 },
+                        type: 'mixed'
+                    },
+                    {
+                        text: "协商和解，息事宁人",
+                        effects: { savings: 500, mood: -8 },
+                        type: 'mixed'
                     }
                 ]
             }
@@ -700,6 +976,40 @@ const EventLibrary = {
                     {
                         text: "全面复制高压话术",
                         effects: { profit: 5000, fans: 1200, personaFit: -15, mood: -10, rankProgress: -8 },
+                        type: 'mixed'
+                    }
+                ]
+            },
+            {
+                title: "素颜出镜 vs 全妆营业",
+                description: "粉丝呼吁你多拍素颜/淡妆「真实一面」，但数据显示全妆内容点赞和转化更高。",
+                requirements: { minRank: "初级达人" },
+                options: [
+                    {
+                        text: "增加素颜/淡妆内容",
+                        effects: { personaFit: 10, fans: 300, profit: -200 },
+                        type: 'mixed'
+                    },
+                    {
+                        text: "坚持全妆，数据为先",
+                        effects: { profit: 800, fans: 200, personaFit: -5 },
+                        type: 'mixed'
+                    }
+                ]
+            },
+            {
+                title: "多平台分发策略",
+                description: "静音爆了的内容要不要同步发小绿书/C站？不同平台调性不同，可能吃力不讨好。",
+                requirements: { minRank: "中级达人" },
+                options: [
+                    {
+                        text: "全平台分发，扩大曝光",
+                        effects: { fans: 500, energy: -15, contentQuality: -3 },
+                        type: 'mixed'
+                    },
+                    {
+                        text: "专注主平台，做精不做多",
+                        effects: { contentQuality: 8, personaFit: 6, rankProgress: 6 },
                         type: 'mixed'
                     }
                 ]
@@ -839,6 +1149,59 @@ const EventLibrary = {
                         type: 'positive'
                     }
                 ]
+            },
+            {
+                title: "家居/生活方式品牌合作",
+                description: "📱 助理消息：某家居或生活方式品牌邀请你拍一期「理想生活」主题内容，报酬+产品赞助。",
+                isMessage: true,
+                requirements: { minRank: "初级达人" },
+                options: [
+                    {
+                        text: "接受合作",
+                        effects: { profit: 2000, fans: 500, personaFit: 8, energy: -12, savings: -200 },
+                        type: 'positive'
+                    },
+                    {
+                        text: "婉拒",
+                        effects: { mood: 5 },
+                        type: 'neutral'
+                    }
+                ]
+            },
+            {
+                title: "旅行vlog赞助邀请",
+                description: "某旅游平台或景区邀请你做一期旅行vlog，包食宿+稿费，内容需带定位和话题。",
+                requirements: { minRank: "中级达人" },
+                options: [
+                    {
+                        text: "接受邀请",
+                        effects: { fans: 900, profit: 3000, personaFit: 6, energy: -20, savings: -500 },
+                        type: 'positive'
+                    },
+                    {
+                        text: "婉拒",
+                        effects: { energy: 5 },
+                        type: 'neutral'
+                    }
+                ]
+            },
+            {
+                title: "综艺/真人秀飞行嘉宾",
+                description: "📱 助理重磅：某生活类综艺或真人秀邀请你作为飞行嘉宾录一期，曝光大但可能被剪辑成「人设」。",
+                isMessage: true,
+                requirements: { minRank: "高级达人" },
+                options: [
+                    {
+                        text: "接受邀约",
+                        effects: { fans: 2000, profit: 5000, personaFit: -5, energy: -25 },
+                        type: 'mixed'
+                    },
+                    {
+                        text: "婉拒，怕人设崩塌",
+                        effects: { personaFit: 10, mood: 10 },
+                        type: 'neutral'
+                    }
+                ]
             }
         ],
         negative: [
@@ -871,6 +1234,40 @@ const EventLibrary = {
                         text: "删除视频，不予回应",
                         effects: { fans: -150, mood: -15, personaFit: -5 },
                         type: 'negative'
+                    }
+                ]
+            },
+            {
+                title: "内容同质化被吐槽",
+                description: "粉丝留言说你的vlog越来越像别人，没有自己的风格，取关了一波。",
+                requirements: { minRank: "中级达人" },
+                options: [
+                    {
+                        text: "尝试新形式新选题",
+                        effects: { contentQuality: 8, fans: -100, energy: -15 },
+                        type: 'mixed'
+                    },
+                    {
+                        text: "坚持现有风格",
+                        effects: { fans: -300, personaFit: -5 },
+                        type: 'negative'
+                    }
+                ]
+            },
+            {
+                title: "合作方跑路",
+                description: "谈好的品牌合作临期被告知「预算砍了」「换人了」，档期已空出来。",
+                requirements: { minRank: "初级达人" },
+                options: [
+                    {
+                        text: "快速找替补合作",
+                        effects: { profit: 1000, mood: -8, energy: -10 },
+                        type: 'mixed'
+                    },
+                    {
+                        text: "休息一阵，调整心态",
+                        effects: { mood: 5, energy: 10, profit: 0 },
+                        type: 'neutral'
                     }
                 ]
             }
@@ -957,6 +1354,40 @@ const EventLibrary = {
                     {
                         text: "保持多机位剪辑",
                         effects: { contentQuality: 5, fans: 300, rankProgress: 5 },
+                        type: 'mixed'
+                    }
+                ]
+            },
+            {
+                title: "露脸 vs 不露脸",
+                description: "你一直不露脸靠声音和手出镜，数据稳定。有团队建议露脸能涨粉破圈，但会失去隐私。",
+                requirements: { minRank: "初级达人" },
+                options: [
+                    {
+                        text: "尝试露脸几期",
+                        effects: { fans: 600, personaFit: -3, mood: -5 },
+                        type: 'mixed'
+                    },
+                    {
+                        text: "坚持不露脸",
+                        effects: { personaFit: 8, contentQuality: 5, fans: 100 },
+                        type: 'mixed'
+                    }
+                ]
+            },
+            {
+                title: "日更压力",
+                description: "为了维持流量你一直在日更，身体和创意都跟不上了，是否要降频保质量？",
+                requirements: { minRank: "中级达人" },
+                options: [
+                    {
+                        text: "降频，保证质量",
+                        effects: { contentQuality: 10, mood: 10, energy: 15, fans: -200 },
+                        type: 'mixed'
+                    },
+                    {
+                        text: "坚持日更，咬牙撑住",
+                        effects: { fans: 300, profit: 500, mood: -15, energy: -20 },
                         type: 'mixed'
                     }
                 ]
@@ -2016,6 +2447,38 @@ const TimelineEvents = [
             }
         ],
         nextId: "chain-shortdrama-2"
+    },
+    { id: "2026-04-newcomer-chain", year: 2026, month: 4, requirements: { minRank: "初级达人", maxRank: "初级达人" },
+        title: "新人扶持·入选", description: "你入选平台本期「新人扶持计划」，将获得连续两期流量加持，但需配合完成指定任务。",
+        options: [
+            { text: "接受扶持，完成任务", effects: { fans: 800, contentQuality: 5, rankProgress: 10, energy: -12 }, type: 'positive' },
+            { text: "婉拒，按自己节奏来", effects: { personaFit: 6, rankProgress: 4 }, type: 'neutral' }
+        ],
+        nextId: "chain-newcomer-2"
+    },
+    { id: "2026-08-mid-chain", year: 2026, month: 8, requirements: { minRank: "中级达人" },
+        title: "第一次大合作·邀约", description: "某品牌方首次提出「系列合作」意向，连续3期内容+线下活动，报价可观但占用精力。",
+        options: [
+            { text: "接下系列合作", effects: { profit: 4000, fans: 1200, personaFit: 5, energy: -20, rankProgress: 12 }, type: 'mixed' },
+            { text: "只接单期试水", effects: { profit: 1500, fans: 500, energy: -10, rankProgress: 6 }, type: 'mixed' }
+        ],
+        nextId: "chain-mid-2"
+    },
+    { id: "2026-12-crisis-chain", year: 2026, month: 12, requirements: { minRank: "高级达人" },
+        title: "舆论风波·苗头", description: "一条旧内容被断章取义翻出，开始有小范围争议，公关建议提前应对。",
+        options: [
+            { text: "第一时间澄清说明", effects: { personaFit: 10, fans: -300, mood: -8, energy: -10, rankProgress: 6 }, type: 'mixed' },
+            { text: "冷处理，不回应", effects: { fans: -600, personaFit: -8, mood: -12, rankProgress: -6 }, type: 'negative' }
+        ],
+        nextId: "chain-crisis-2"
+    },
+    { id: "2027-05-head-chain", year: 2027, month: 5, requirements: { minRank: "头部达人" },
+        title: "品牌年度合作·洽谈", description: "某头部品牌邀请你参与年度战略合作，金额大、周期长，但要求独家与形象约束。",
+        options: [
+            { text: "推进年度合作", effects: { profit: 15000, fans: 3000, personaFit: -5, energy: -25, rankProgress: 15 }, type: 'mixed' },
+            { text: "只签季度约", effects: { profit: 5000, fans: 1000, personaFit: 5, energy: -12, rankProgress: 8 }, type: 'mixed' }
+        ],
+        nextId: "chain-head-2"
     }
 ];
 
@@ -2311,5 +2774,99 @@ const ChainEvents = {
                 type: 'mixed'
             }
         ]
+    },
+    "chain-newcomer-2": {
+        id: "chain-newcomer-2",
+        title: "新人扶持·流量兑现",
+        description: "扶持期流量到位，你的内容曝光明显增加，粉丝与互动都在涨。",
+        options: [
+            { text: "趁势多更几条", effects: { fans: 600, contentQuality: 4, energy: -15, rankProgress: 8 }, type: 'positive' },
+            { text: "稳扎稳打，不贪多", effects: { fans: 400, personaFit: 8, rankProgress: 6 }, type: 'mixed' }
+        ]
+    },
+    "chain-mid-2": {
+        id: "chain-mid-2",
+        title: "第一次大合作·执行期",
+        description: "系列合作进入执行期，品牌方反馈积极，但你也感到节奏紧张。",
+        options: [
+            { text: "全力配合，争取续约", effects: { profit: 3000, fans: 800, personaFit: 6, energy: -18, rankProgress: 10 }, type: 'mixed' },
+            { text: "按合同完成即可", effects: { profit: 2000, fans: 400, energy: -10, rankProgress: 5 }, type: 'mixed' }
+        ]
+    },
+    "chain-crisis-2": {
+        id: "chain-crisis-2",
+        title: "舆论风波·结果",
+        description: "澄清后争议逐渐平息，部分粉丝回归，但口碑损伤需要时间修复。",
+        options: [
+            { text: "加强内容审核，避免再犯", effects: { personaFit: 12, contentQuality: 8, fans: 200, rankProgress: 6 }, type: 'mixed' },
+            { text: "低调一阵再恢复节奏", effects: { mood: 10, fans: 100, rankProgress: 4 }, type: 'mixed' }
+        ]
+    },
+    "chain-head-2": {
+        id: "chain-head-2",
+        title: "品牌年度合作·落地",
+        description: "年度合作正式落地，资源与曝光拉满，同时品牌对内容的话语权也变强。",
+        options: [
+            { text: "深度绑定，冲更高目标", effects: { profit: 8000, fans: 2000, personaFit: -8, energy: -20, rankProgress: 12 }, type: 'mixed' },
+            { text: "保持边界，留出创作空间", effects: { profit: 4000, fans: 1000, personaFit: 8, energy: -10, rankProgress: 8 }, type: 'mixed' }
+        ]
     }
 };
+
+// 低概率、数值夸张的节奏调节事件（权重池中占比较小，用于制造惊喜/危机）
+const LowProbabilityBigImpactEvents = [
+    {
+        id: "lowprob-blowup",
+        title: "一条爆款",
+        description: "你的一条内容意外爆了！算法与热点叠加，单条播放破圈，粉丝暴涨。",
+        options: [
+            { text: "趁热打铁，连更几条", effects: { fans: 5000, contentQuality: 5, energy: -25, rankProgress: 15 }, type: 'positive' },
+            { text: "稳住节奏，避免透支", effects: { fans: 3000, personaFit: 10, rankProgress: 12 }, type: 'positive' }
+        ]
+    },
+    {
+        id: "lowprob-windfall",
+        title: "意外之财",
+        description: "之前的合作尾款提前到账、或某笔分成结算异常丰厚，存款突然多出一笔。",
+        options: [
+            { text: "存起来当储备", effects: { savings: 8000 }, type: 'positive' },
+            { text: "投入设备与制作", effects: { savings: 4000, contentQuality: 15, personaFit: 5 }, type: 'mixed' }
+        ]
+    },
+    {
+        id: "lowprob-blackswan-fans",
+        title: "黑天鹅·掉粉",
+        description: "平台bug、误伤或一次舆论发酵，导致账号短时间内大量掉粉。",
+        options: [
+            { text: "公开说明并申诉", effects: { fans: -2000, personaFit: 8, mood: -15 }, type: 'negative' },
+            { text: "低调修复内容再拉新", effects: { fans: -3000, contentQuality: 10, mood: -10 }, type: 'negative' }
+        ]
+    },
+    {
+        id: "lowprob-blackswan-money",
+        title: "黑天鹅·破财",
+        description: "合作方跑路、设备损坏或突发赔偿，一笔大额支出让你措手不及。",
+        options: [
+            { text: "咬牙扛过去", effects: { savings: -5000, mood: -20 }, type: 'negative' },
+            { text: "砍掉部分计划省钱", effects: { savings: -3000, contentQuality: -10, energy: 10 }, type: 'mixed' }
+        ]
+    },
+    {
+        id: "lowprob-viral-negative",
+        title: "被骂上热搜",
+        description: "一条内容被误解或恶意剪辑，骂声一片，粉丝与心态都受冲击。",
+        options: [
+            { text: "诚恳回应并下架争议内容", effects: { fans: -1500, personaFit: 12, mood: -25 }, type: 'negative' },
+            { text: "硬刚到底", effects: { fans: -2500, personaFit: -15, mood: -30 }, type: 'negative' }
+        ]
+    },
+    {
+        id: "lowprob-mega-deal",
+        title: "天降大单",
+        description: "某品牌临时加码，给出一笔远超平时的合作费用，但档期很紧。",
+        options: [
+            { text: "接！全力赶档期", effects: { profit: 12000, fans: 1500, energy: -30, mood: -10 }, type: 'mixed' },
+            { text: "婉拒，怕质量翻车", effects: { personaFit: 10, mood: 5 }, type: 'neutral' }
+        ]
+    }
+];

@@ -208,9 +208,9 @@ class InfluencerGame {
 
     // 粉丝增长：职级、粉丝量、内容质量三维加成（仅用于涨粉，数值越高增长越高）
     getFanGrowthDimensionMultiplier() {
-        const rankOrder = ['素人', '初级达人', '中级达人', '高级达人', '头部达人', 'MCN签约'];
+        const rankOrder = ['素人', '初级达人', '新锐达人', '中级达人', '进阶达人', '高级达人', '头部达人', '顶流达人', 'MCN签约'];
         const rankIndex = rankOrder.indexOf(this.state.rank || '素人');
-        const rankMult = 0.85 + rankIndex * 0.19; // 0.85 ~ 1.8
+        const rankMult = 0.85 + rankIndex * 0.12; // 9档：0.85 ~ 1.81
 
         const fans = this.state.fans || 0;
         const fansMult = 1 + Math.min(0.35, Math.log10(fans + 1) * 0.08); // 粉丝越多口碑/曝光加成，约 1.0 ~ 1.35
@@ -234,7 +234,7 @@ class InfluencerGame {
     isEventEligible(event) {
         if (!event || !event.requirements) return true;
         const req = event.requirements;
-        const rankOrder = ["素人", "初级达人", "中级达人", "高级达人", "头部达人", "MCN签约"];
+        const rankOrder = ["素人", "初级达人", "新锐达人", "中级达人", "进阶达人", "高级达人", "头部达人", "顶流达人", "MCN签约"];
         const currentRankIndex = rankOrder.indexOf(this.state.rank);
         if (req.genders && Array.isArray(req.genders)) {
             if (!this.state.gender || !req.genders.includes(this.state.gender)) return false;
@@ -461,12 +461,13 @@ class InfluencerGame {
             return;
         }
         if (key === 'rankProgress') {
-            // 将进度转换为内容质量增长
+            this.state.rankProgress = Math.max(0, (this.state.rankProgress || 0) + value);
             const contentQualityGain = Math.floor(value * 0.5);
             if (contentQualityGain !== 0) {
                 this.state.contentQuality = Math.max(0, this.state.contentQuality + contentQualityGain);
                 results.push(`内容质量${contentQualityGain > 0 ? '+' : ''}${contentQualityGain}`);
             }
+            results.push(`职级进度${value > 0 ? '+' : ''}${value}`);
             return;
         }
         if (key === 'attribute') {
@@ -641,16 +642,23 @@ class InfluencerGame {
 
     // 获取可用行动
     getAvailableActions() {
-        const actions = [...GameConfig.commonActions];
-        
-        // 添加专属行动
+        const actions = [];
+        GameConfig.commonActions.forEach(a => {
+            if (!a.rank || this.canUnlockRank(a.rank)) {
+                actions.push({ ...a, categoryType: 'common' });
+            }
+        });
         if (this.state.category) {
-            const exclusiveActions = this.state.category.exclusiveActions.filter(action => {
-                return this.canUnlockRank(action.rank);
+            this.state.category.exclusiveActions.forEach(a => {
+                if (this.canUnlockRank(a.rank)) {
+                    actions.push({
+                        ...a,
+                        categoryType: 'exclusive',
+                        categoryName: this.state.category.name
+                    });
+                }
             });
-            actions.push(...exclusiveActions);
         }
-        
         return actions;
     }
 
@@ -883,7 +891,7 @@ class InfluencerGame {
     // 按粉丝规模/职级触发的大事件
     getMilestoneEventForCurrentMonth() {
         if (!Array.isArray(MilestoneEvents) || MilestoneEvents.length === 0) return null;
-        const rankOrder = ["素人", "初级达人", "中级达人", "高级达人", "头部达人", "MCN签约"];
+        const rankOrder = ["素人", "初级达人", "新锐达人", "中级达人", "进阶达人", "高级达人", "头部达人", "顶流达人", "MCN签约"];
         const currentRankIndex = rankOrder.indexOf(this.state.rank);
         const event = MilestoneEvents.find(item => {
             const rankOk = item.minRank
@@ -1094,6 +1102,60 @@ class InfluencerGame {
                         text: "感谢粉丝，努力创作",
                         effects: { mood: 15, fans: 500, personaFit: 8, rankProgress: 8, savings: -300 },
                         type: 'positive'
+                    }
+                ]
+            },
+            {
+                title: "首次商业合作邀约",
+                description: "📱 助理消息：你收到第一份正式商业合作邀约！对方是中小品牌，报价不高但能打开变现大门。",
+                isMessage: true,
+                requirements: { minRank: "初级达人", maxRank: "初级达人" },
+                options: [
+                    {
+                        text: "接受合作，迈出第一步",
+                        effects: { profit: 800, fans: 200, personaFit: 5, rankProgress: 8 },
+                        type: 'positive'
+                    },
+                    {
+                        text: "婉拒，再等等更好的",
+                        effects: { contentQuality: 5, mood: 5 },
+                        type: 'neutral'
+                    }
+                ]
+            },
+            {
+                title: "行业新人奖提名",
+                description: "📱 助理通知：你被提名为平台「年度新锐创作者」，需配合宣传和颁奖礼。",
+                isMessage: true,
+                requirements: { minRank: "中级达人", maxRank: "中级达人" },
+                options: [
+                    {
+                        text: "积极参与",
+                        effects: { fans: 600, personaFit: 10, rankProgress: 12, energy: -10, savings: -400 },
+                        type: 'positive'
+                    },
+                    {
+                        text: "婉拒出席，低调创作",
+                        effects: { contentQuality: 8, mood: 5 },
+                        type: 'neutral'
+                    }
+                ]
+            },
+            {
+                title: "头部创作者闭门会",
+                description: "📱 助理重磅：平台邀请你参加头部创作者闭门会，与算法、运营直接沟通，仅限高职级。",
+                isMessage: true,
+                requirements: { minRank: "头部达人" },
+                options: [
+                    {
+                        text: "参加闭门会",
+                        effects: { contentQuality: 5, personaFit: 8, rankProgress: 10, energy: -15 },
+                        type: 'positive'
+                    },
+                    {
+                        text: "婉拒，保持距离",
+                        effects: { mood: 5 },
+                        type: 'neutral'
                     }
                 ]
             },
@@ -1752,6 +1814,7 @@ class InfluencerGame {
         const categoryChallengeEvents = (typeof CategoryChallengeEventsByCategory !== 'undefined' && categoryId)
             ? (CategoryChallengeEventsByCategory[categoryId] || [])
             : [];
+        const lowProbEvents = typeof LowProbabilityBigImpactEvents !== 'undefined' ? LowProbabilityBigImpactEvents : [];
 
         return this.pickWeightedEvent([
             { weight: 1, events },
@@ -1760,14 +1823,19 @@ class InfluencerGame {
             { weight: this.getWeightByRank(GameConfig.teamMatrixEventWeightByRank, 0), events: teamMatrixEvents },
             { weight: this.getWeightByRank(GameConfig.rankChallengeWeightByRank, 0.2), events: rankChallengeEvents },
             { weight: this.getWeightByRank(GameConfig.categoryChallengeWeightByRank, 0.2), events: categoryChallengeEvents },
-            { weight: 0.15, events: missedEvents }
+            { weight: 0.15, events: missedEvents },
+            { weight: 0.06, events: lowProbEvents }
         ]) || this.pickEligibleEvent(events) || events[0];
     }
 
     // 处理事件选项
-    handleEventOption(event, optionIndex) {
+    handleEventOption(event, optionIndex, partner) {
         const option = event.options[optionIndex];
         const results = [];
+
+        if (partner) {
+            this.addLog(`与 ${partner.name}（${partner.tag}）合作：${option.text}`, 'positive');
+        }
 
         if (event.title === '能力训练') {
             const maxTraining = GameConfig.trainingConfig?.maxPerMonth ?? 2;
@@ -1829,7 +1897,7 @@ class InfluencerGame {
 
     // 根据职级+粉丝量计算擦边事件严重度 0~3（职级越高、粉丝越多越严重）
     getEdgeSeverityLevel() {
-        const rankOrder = ['素人', '初级达人', '中级达人', '高级达人', '头部达人', 'MCN签约'];
+        const rankOrder = ['素人', '初级达人', '新锐达人', '中级达人', '进阶达人', '高级达人', '头部达人', '顶流达人', 'MCN签约'];
         const rankIndex = rankOrder.indexOf(this.state.rank || '素人');
         const fans = this.state.fans || 0;
         const bands = GameConfig.edgeEscalationConfig?.fanSeverityBands || [10000, 100000, 500000];
@@ -1848,7 +1916,7 @@ class InfluencerGame {
         const perCountRate = (config && config.triggerPerCountRate != null) ? config.triggerPerCountRate : 0.03;
         const maxRate = (config && config.triggerMaxRate != null) ? config.triggerMaxRate : 0.85;
 
-        const rankOrder = ['素人', '初级达人', '中级达人', '高级达人', '头部达人', 'MCN签约'];
+        const rankOrder = ['素人', '初级达人', '新锐达人', '中级达人', '进阶达人', '高级达人', '头部达人', '顶流达人', 'MCN签约'];
         const rankIndex = rankOrder.indexOf(this.state.rank || '素人');
         const rankBonus = rankIndex * 0.05;
 
@@ -1896,20 +1964,24 @@ class InfluencerGame {
         };
         
         const score = this.calculateMonthlyScore();
-        let rating, contentQualityBonus;
+        let rating, contentQualityBonus, progressAdd;
         
         if (score >= GameConfig.monthlySettle.excellent.score) {
             rating = GameConfig.monthlySettle.excellent.name;
-            contentQualityBonus = Math.floor(GameConfig.monthlySettle.excellent.progressAdd * 0.3);
+            progressAdd = GameConfig.monthlySettle.excellent.progressAdd;
+            contentQualityBonus = Math.floor(progressAdd * 0.3);
         } else if (score >= GameConfig.monthlySettle.good.score) {
             rating = GameConfig.monthlySettle.good.name;
-            contentQualityBonus = Math.floor(GameConfig.monthlySettle.good.progressAdd * 0.3);
+            progressAdd = GameConfig.monthlySettle.good.progressAdd;
+            contentQualityBonus = Math.floor(progressAdd * 0.3);
         } else if (score >= GameConfig.monthlySettle.qualified.score) {
             rating = GameConfig.monthlySettle.qualified.name;
-            contentQualityBonus = Math.floor(GameConfig.monthlySettle.qualified.progressAdd * 0.3);
+            progressAdd = GameConfig.monthlySettle.qualified.progressAdd;
+            contentQualityBonus = Math.floor(progressAdd * 0.3);
         } else {
             rating = GameConfig.monthlySettle.unqualified.name;
-            contentQualityBonus = Math.floor(GameConfig.monthlySettle.unqualified.progressAdd * 0.3);
+            progressAdd = GameConfig.monthlySettle.unqualified.progressAdd;
+            contentQualityBonus = Math.floor(progressAdd * 0.3);
         }
         
         if (contentQualityBonus > 0) {
@@ -1917,6 +1989,7 @@ class InfluencerGame {
         } else if (contentQualityBonus < 0) {
             this.state.contentQuality = Math.max(0, this.state.contentQuality + contentQualityBonus);
         }
+        this.state.rankProgress = Math.max(0, (this.state.rankProgress || 0) + progressAdd);
         
         // 人设契合或内容质量归零时，月度结算掉粉
         const cq = this.state.contentQuality || 0;
@@ -2054,8 +2127,8 @@ class InfluencerGame {
         
         const nextRankConfig = GameConfig.rankConfig[currentRankConfig.nextRank];
         
-        // 检查是否满足晋级条件
-        if (this.state.rankProgress >= nextRankConfig.progressFull) {
+        const progressRequired = nextRankConfig.progressFull ?? 100;
+        if (this.state.rankProgress >= progressRequired) {
             // 额外条件检查
             const conditionsMet = this.checkRankUpConditions(currentRankConfig.nextRank);
             
@@ -2078,31 +2151,31 @@ class InfluencerGame {
         }
     }
 
-    // 检查晋级条件
+    // 检查晋级条件（与 rankConfig 一致，违规上限按职级）
     checkRankUpConditions(nextRank) {
         const nextConfig = GameConfig.rankConfig[nextRank];
+        if (!nextConfig) return false;
+        const minFans = nextConfig.minFans ?? 0;
+        const minContentQuality = nextConfig.minContentQuality ?? 0;
+        const violationMaxByRank = { '初级达人': 10, '新锐达人': 12, '中级达人': 15, '进阶达人': 17, '高级达人': 20, '头部达人': 25, '顶流达人': 28, 'MCN签约': 30 };
+        if (this.state.violationIndex >= (violationMaxByRank[nextRank] ?? 30)) return false;
+        if (this.state.fans < minFans) return false;
+        if ((this.state.contentQuality || 0) < minContentQuality) return false;
         
-        // 根据职级检查不同条件
         switch(nextRank) {
             case '初级达人':
-                return this.state.violationIndex < 10 && 
-                       this.state.fans >= 1000;
+            case '新锐达人':
+                return true;
             case '中级达人':
-                return this.state.violationIndex < 15 && 
-                       this.state.fans >= 5000 &&
-                       this.state.completedPositiveEvents.length >= 1;
+            case '进阶达人':
+                return this.state.completedPositiveEvents.length >= 1;
             case '高级达人':
-                return this.state.violationIndex < 20 && 
-                       this.state.fans >= 20000 &&
-                       !this.state.hasRankViolation;
+                return !this.state.hasRankViolation;
             case '头部达人':
-                return this.state.violationIndex < 25 && 
-                       this.state.fans >= 100000 &&
-                       this.state.completedPositiveEvents.length >= 2;
+            case '顶流达人':
+                return this.state.completedPositiveEvents.length >= 2;
             case 'MCN签约':
-                return this.state.violationIndex < 30 && 
-                       this.state.fans >= 500000 &&
-                       this.state.profit >= 100000;
+                return (this.state.profit || 0) >= 100000;
             default:
                 return true;
         }
@@ -2191,7 +2264,7 @@ class InfluencerGame {
     // 检查是否可以开设新平台账号
     canOpenNewPlatform() {
         const config = GameConfig.multiPlatformConfig;
-        const rankOrder = ["素人", "初级达人", "中级达人", "高级达人", "头部达人", "MCN签约"];
+        const rankOrder = ["素人", "初级达人", "新锐达人", "中级达人", "进阶达人", "高级达人", "头部达人", "顶流达人", "MCN签约"];
         const currentRankIndex = rankOrder.indexOf(this.state.rank);
         const minRankIndex = rankOrder.indexOf(config.unlockConditions.minRank);
         

@@ -7,9 +7,9 @@ const GameConfig = {
     platforms: {
         douyin: {
             id: "douyin",
-            name: "抖音",
+            name: "静音",
             icon: "🎵",
-            description: "短视频之王，流量巨大但竞争激烈",
+            description: "反义梗：抖↔静。短视频之王，流量巨大但竞争激烈",
             features: [
                 "✓ 粉丝增长速度 +30%",
                 "✓ 推荐算法强大",
@@ -28,9 +28,9 @@ const GameConfig = {
         },
         bilibili: {
             id: "bilibili",
-            name: "B站",
+            name: "C站",
             icon: "📺",
-            description: "高质量内容社区，粉丝粘性强",
+            description: "反义梗：B的下一站。高质量内容社区，粉丝粘性强",
             features: [
                 "✓ 内容质量加成 +30%",
                 "✓ 粉丝忠诚度高",
@@ -49,9 +49,9 @@ const GameConfig = {
         },
         xiaohongshu: {
             id: "xiaohongshu",
-            name: "小红书",
+            name: "小绿书",
             icon: "📕",
-            description: "种草平台，女性用户为主，变现能力强",
+            description: "反义梗：红↔绿。种草平台，女性用户为主，变现能力强",
             features: [
                 "✓ 变现收益 +40%",
                 "✓ 品牌合作机会多",
@@ -70,9 +70,9 @@ const GameConfig = {
         },
         kuaishou: {
             id: "kuaishou",
-            name: "快手",
+            name: "慢手",
             icon: "⚡",
-            description: "老铁经济，打赏文化浓厚",
+            description: "反义梗：快↔慢。老铁经济，打赏文化浓厚",
             features: [
                 "✓ 打赏收益 +50%",
                 "✓ 粉丝互动性强",
@@ -91,9 +91,9 @@ const GameConfig = {
         },
         weibo: {
             id: "weibo",
-            name: "微博",
+            name: "巨博",
             icon: "🎤",
-            description: "明星网红聚集地，话题传播快",
+            description: "反义梗：微↔巨。明星网红聚集地，话题传播快",
             features: [
                 "✓ 流量池大",
                 "✓ 热点传播快",
@@ -116,8 +116,8 @@ const GameConfig = {
     platformOnboarding: {
         douyin: [
             {
-                title: "抖音创作者入驻指南",
-                description: "📱 小助理：恭喜你正式入驻抖音！作为短视频之王，这里有海量流量等着你。不过竞争也很激烈哦~\n\n我帮你整理了新人起号攻略：\n1. 先完成实名认证\n2. 完善个人主页和简介\n3. 发布3条优质短视频参加新人流量扶持\n\n平台会给新创作者额外的推荐权重，抓住这个黄金期！",
+                title: "静音创作者入驻指南",
+                description: "📱 小助理：恭喜你正式入驻静音！（谐音反义：抖↔静）作为短视频之王，这里有海量流量等着你。不过竞争也很激烈哦~\n\n我帮你整理了新人起号攻略：\n1. 先完成实名认证\n2. 完善个人主页和简介\n3. 发布3条优质短视频参加新人流量扶持\n\n平台会给新创作者额外的推荐权重，抓住这个黄金期！",
                 isMessage: true,
                 isOnboarding: true,
                 options: [
@@ -134,8 +134,8 @@ const GameConfig = {
                 ]
             },
             {
-                title: "抖音算法机制提醒",
-                description: "📱 小助理：提醒你，抖音的推荐算法非常看重完播率和互动率！前5秒是黄金时间，一定要抓住观众眼球。\n\n另外，平台对擦边内容管控很严，违规会直接限流甚至封号。建议你走优质内容路线，长期收益更大。",
+                title: "静音算法机制提醒",
+                description: "📱 小助理：提醒你，静音的推荐算法非常看重完播率和互动率！前5秒是黄金时间，一定要抓住观众眼球。\n\n另外，平台对擦边内容管控很严，违规会直接限流甚至封号。建议你走优质内容路线，长期收益更大。",
                 isMessage: true,
                 isOnboarding: true,
                 options: [
@@ -149,13 +149,13 @@ const GameConfig = {
         ],
         bilibili: [
             {
-                title: "B站新人UP主须知",
-                description: "📱 小助理：欢迎来到B站！这里是国内最优质的内容社区之一。B站用户对内容质量要求很高，但粉丝粘性也是最强的。\n\n重要提示：B站有一项独特的会员答题制度，新用户需要通过答题才能成为正式会员。作为UP主，了解社区文化非常重要！\n\n我建议你先做一套B站社区知识测试，熟悉弹幕礼仪和社区公约。",
+                title: "C站新人UP主须知",
+                description: "📱 小助理：欢迎来到C站！（反义梗：B的下一站）这里是国内最优质的内容社区之一。C站用户对内容质量要求很高，但粉丝粘性也是最强的。\n\n重要提示：C站有一项独特的会员答题制度，新用户需要通过答题才能成为正式会员。作为UP主，了解社区文化非常重要！\n\n我建议你先做一套C站社区知识测试，熟悉弹幕礼仪和社区公约。",
                 isMessage: true,
                 isOnboarding: true,
                 options: [
                     {
-                        text: "认真答题，融入B站文化",
+                        text: "认真答题，融入C站文化",
                         effects: { contentQuality: 8, personaFit: 8, fans: 30, energy: -15 },
                         type: 'positive'
                     },
@@ -172,8 +172,8 @@ const GameConfig = {
                 ]
             },
             {
-                title: "B站创作激励计划",
-                description: "📱 小助理：好消息！B站有创作激励计划，根据视频播放量和质量给UP主发放收益。不过门槛是粉丝数达到1000+且投稿量达标。\n\n另外，B站用户非常重视原创和深度内容，搬运和水视频会被弹幕吐槽甚至举报。建议你认真打磨每一期内容！\n\n小贴士：善用B站的专栏、动态等功能，多和粉丝互动，发展弹幕文化。",
+                title: "C站创作激励计划",
+                description: "📱 小助理：好消息！C站有创作激励计划，根据视频播放量和质量给UP主发放收益。不过门槛是粉丝数达到1000+且投稿量达标。\n\n另外，C站用户非常重视原创和深度内容，搬运和水视频会被弹幕吐槽甚至举报。建议你认真打磨每一期内容！\n\n小贴士：善用C站的专栏、动态等功能，多和粉丝互动，发展弹幕文化。",
                 isMessage: true,
                 isOnboarding: true,
                 options: [
@@ -187,8 +187,8 @@ const GameConfig = {
         ],
         xiaohongshu: [
             {
-                title: "小红书创作者入驻",
-                description: "📱 小助理：欢迎入驻小红书！这里是最大的种草社区，以女性用户为主，消费力很强。\n\n入驻须知：\n1. 小红书非常看重图文质量，封面图一定要精致\n2. 笔记标题要有吸引力，善用关键词\n3. 平台有严格的广告法合规要求，软广要打标\n\n品牌方经常在小红书寻找KOL合作，变现能力很强，但前提是你的内容要足够种草！",
+                title: "小绿书创作者入驻",
+                description: "📱 小助理：欢迎入驻小绿书！（反义梗：红↔绿）这里是最大的种草社区，以女性用户为主，消费力很强。\n\n入驻须知：\n1. 小绿书非常看重图文质量，封面图一定要精致\n2. 笔记标题要有吸引力，善用关键词\n3. 平台有严格的广告法合规要求，软广要打标\n\n品牌方经常在小绿书寻找KOL合作，变现能力很强，但前提是你的内容要足够种草！",
                 isMessage: true,
                 isOnboarding: true,
                 options: [
@@ -205,8 +205,8 @@ const GameConfig = {
                 ]
             },
             {
-                title: "小红书蒲公英平台介绍",
-                description: "📱 小助理：小红书有官方的商业合作平台\u201C蒲公英\u201D，品牌方会通过这个平台找达人合作。\n\n开通条件：粉丝数5000+，近30天有内容更新。达到条件后品牌合作机会会大幅增加！\n\n温馨提示：小红书社区对虚假种草、夸大宣传管控很严，一定要真实分享体验。",
+                title: "小绿书蒲公英平台介绍",
+                description: "📱 小助理：小绿书有官方的商业合作平台\u201C蒲公英\u201D，品牌方会通过这个平台找达人合作。\n\n开通条件：粉丝数5000+，近30天有内容更新。达到条件后品牌合作机会会大幅增加！\n\n温馨提示：小绿书社区对虚假种草、夸大宣传管控很严，一定要真实分享体验。",
                 isMessage: true,
                 isOnboarding: true,
                 options: [
@@ -220,8 +220,8 @@ const GameConfig = {
         ],
         kuaishou: [
             {
-                title: "快手老铁文化指南",
-                description: "📱 小助理：欢迎来到快手！这里是最接地气的短视频平台，\u201C老铁文化\u201D是核心。\n\n快手特色：\n1. 直播打赏是主要收入来源，粉丝互动性极强\n2. 下沉市场用户为主，真实接地气的内容更受欢迎\n3. 平台对擦边内容相对宽容，但也在逐步收紧\n\n建议你多开直播，和老铁们互动。快手的粉丝忠诚度很高，只要真诚对待，老铁们会一直支持你！",
+                title: "慢手老铁文化指南",
+                description: "📱 小助理：欢迎来到慢手！（反义梗：快↔慢）这里是最接地气的短视频平台，\u201C老铁文化\u201D是核心。\n\n慢手特色：\n1. 直播打赏是主要收入来源，粉丝互动性极强\n2. 下沉市场用户为主，真实接地气的内容更受欢迎\n3. 平台对擦边内容相对宽容，但也在逐步收紧\n\n建议你多开直播，和老铁们互动。慢手的粉丝忠诚度很高，只要真诚对待，老铁们会一直支持你！",
                 isMessage: true,
                 isOnboarding: true,
                 options: [
@@ -238,8 +238,8 @@ const GameConfig = {
                 ]
             },
             {
-                title: "快手磁力聚星介绍",
-                description: "📱 小助理：快手的商业化平台叫\u201C磁力聚星\u201D，达人可以在上面接品牌推广任务。\n\n快手的打赏分成比例相当可观，头部主播月入可达百万级。不过也要注意，快手近期在加强内容审核，低俗内容风险在增加。\n\n记住：在快手，真实感比精致感更重要！",
+                title: "慢手磁力聚星介绍",
+                description: "📱 小助理：慢手的商业化平台叫\u201C磁力聚星\u201D，达人可以在上面接品牌推广任务。\n\n慢手的打赏分成比例相当可观，头部主播月入可达百万级。不过也要注意，慢手近期在加强内容审核，低俗内容风险在增加。\n\n记住：在慢手，真实感比精致感更重要！",
                 isMessage: true,
                 isOnboarding: true,
                 options: [
@@ -253,13 +253,13 @@ const GameConfig = {
         ],
         weibo: [
             {
-                title: "微博大V养成计划",
-                description: "📱 小助理：欢迎入驻微博！这里是中国最大的社交媒体平台，明星、网红、KOL云集。\n\n微博入驻要点：\n1. 先申请微博认证（蓝V/黄V），提升账号可信度\n2. 善用话题标签(#)和超话，融入热点讨论\n3. 微博是舆论场，热搜能让你一夜爆红，也能让你一夜翻车\n\n微博的流量池很大，话题传播速度极快。善用热点是涨粉捷径，但也要注意言论风险！",
+                title: "巨博大V养成计划",
+                description: "📱 小助理：欢迎入驻巨博！（反义梗：微↔巨）这里是中国最大的社交媒体平台，明星、网红、KOL云集。\n\n巨博入驻要点：\n1. 先申请巨博认证（蓝V/黄V），提升账号可信度\n2. 善用话题标签(#)和超话，融入热点讨论\n3. 巨博是舆论场，热搜能让你一夜爆红，也能让你一夜翻车\n\n巨博的流量池很大，话题传播速度极快。善用热点是涨粉捷径，但也要注意言论风险！",
                 isMessage: true,
                 isOnboarding: true,
                 options: [
                     {
-                        text: "申请认证，发布首条微博",
+                        text: "申请认证，发布首条巨博",
                         effects: { fans: 45, personaFit: 5, contentQuality: 3, energy: -10 },
                         type: 'positive'
                     },
@@ -271,8 +271,8 @@ const GameConfig = {
                 ]
             },
             {
-                title: "微博商业化须知",
-                description: "📱 小助理：微博的商业化体系比较成熟，有微任务、品牌合作等多种变现方式。\n\n不过微博的竞争非常激烈，明星和大V占据了大量流量。作为新人博主，建议你找准细分领域，避开和头部正面竞争。\n\n温馨提示：微博是公共舆论空间，发言要谨慎。一条不当言论可能被截图传播，造成不可挽回的影响。",
+                title: "巨博商业化须知",
+                description: "📱 小助理：巨博的商业化体系比较成熟，有巨任务、品牌合作等多种变现方式。\n\n不过巨博的竞争非常激烈，明星和大V占据了大量流量。作为新人博主，建议你找准细分领域，避开和头部正面竞争。\n\n温馨提示：巨博是公共舆论空间，发言要谨慎。一条不当言论可能被截图传播，造成不可挽回的影响。",
                 isMessage: true,
                 isOnboarding: true,
                 options: [
@@ -498,10 +498,13 @@ const GameConfig = {
     // 不同职级的存款事件权重（越高越容易出现）
     savingsEventWeightByRank: {
         "素人": 0.1,
-        "初级达人": 0.18,
+        "初级达人": 0.15,
+        "新锐达人": 0.2,
         "中级达人": 0.28,
-        "高级达人": 0.38,
+        "进阶达人": 0.34,
+        "高级达人": 0.4,
         "头部达人": 0.5,
+        "顶流达人": 0.55,
         "MCN签约": 0.6
     },
 
@@ -509,9 +512,12 @@ const GameConfig = {
     teamBaseEventWeightByRank: {
         "素人": 0,
         "初级达人": 0,
-        "中级达人": 0.08,
-        "高级达人": 0.2,
-        "头部达人": 0.28,
+        "新锐达人": 0.04,
+        "中级达人": 0.1,
+        "进阶达人": 0.16,
+        "高级达人": 0.22,
+        "头部达人": 0.3,
+        "顶流达人": 0.33,
         "MCN签约": 0.35
     },
 
@@ -519,29 +525,38 @@ const GameConfig = {
     teamMatrixEventWeightByRank: {
         "素人": 0,
         "初级达人": 0,
-        "中级达人": 0.02,
-        "高级达人": 0.12,
-        "头部达人": 0.25,
+        "新锐达人": 0,
+        "中级达人": 0.04,
+        "进阶达人": 0.08,
+        "高级达人": 0.14,
+        "头部达人": 0.22,
+        "顶流达人": 0.32,
         "MCN签约": 0.4
     },
 
     // 不同职级挑战事件权重
     rankChallengeWeightByRank: {
         "素人": 0.2,
-        "初级达人": 0.25,
-        "中级达人": 0.3,
-        "高级达人": 0.32,
+        "初级达人": 0.23,
+        "新锐达人": 0.26,
+        "中级达人": 0.29,
+        "进阶达人": 0.31,
+        "高级达人": 0.33,
         "头部达人": 0.35,
+        "顶流达人": 0.37,
         "MCN签约": 0.38
     },
 
     // 类别挑战事件权重
     categoryChallengeWeightByRank: {
         "素人": 0.15,
-        "初级达人": 0.2,
+        "初级达人": 0.18,
+        "新锐达人": 0.21,
         "中级达人": 0.24,
-        "高级达人": 0.28,
+        "进阶达人": 0.26,
+        "高级达人": 0.29,
         "头部达人": 0.32,
+        "顶流达人": 0.34,
         "MCN签约": 0.35
     },
     
@@ -577,11 +592,12 @@ const GameConfig = {
             exclusiveActions: [
                 { name: "科普脚本创作", rank: "素人", energyCost: 15, effects: { contentQuality: 5, personaFit: 3 } },
                 { name: "专业答疑直播", rank: "初级达人", energyCost: 20, effects: { contentQuality: 8, fans: 50 } },
+                { name: "科普实验演示", rank: "新锐达人", energyCost: 18, effects: { contentQuality: 10, fans: 80 } },
                 { name: "科普书籍合作", rank: "高级达人", energyCost: 25, effects: { contentQuality: 10, profit: 500 } },
                 { name: "权威科普联名", rank: "头部达人", energyCost: 30, effects: { contentQuality: 15, fans: 1000, profit: 2000 } }
             ],
             profitChannel: "知识付费变现系数+0.2；商务报价（教育、科技类）+30%；职级每提升1级，商务报价额外+10%",
-            risk: "科普内容错误、虚假科普；擦边玩梗（低俗化科普、过度娱乐化解读专业知识）；职级越高，违规处罚越重",
+            risk: "科普内容错误、虚假科普；擦边玩谐音梗（低俗化科普、过度娱乐化解读专业知识）；职级越高，违规处罚越重",
             bonusEffects: { contentQuality: 10, fanRetention: 0.15, profitRate: 0.2 }
         },
         {
@@ -593,10 +609,11 @@ const GameConfig = {
                 { name: "日常干饭直播", rank: "素人", energyCost: 15, effects: { mood: 5, fans: 30 } },
                 { name: "美食探店", rank: "初级达人", energyCost: 20, effects: { fans: 80, profit: 200 } },
                 { name: "食品测评带货", rank: "中级达人", energyCost: 25, effects: { fans: 150, profit: 800 } },
-                { name: "餐饮品牌专场", rank: "头部达人", energyCost: 30, effects: { fans: 800, profit: 3000 } }
+                { name: "餐饮品牌专场", rank: "进阶达人", energyCost: 26, effects: { fans: 400, profit: 1500 } },
+                { name: "餐饮头部品牌合作", rank: "头部达人", energyCost: 30, effects: { fans: 800, profit: 3000 } }
             ],
             profitChannel: "食品类带货佣金+25%；餐饮品牌商务邀约概率+40%；职级每提升1级，邀约概率额外+8%",
-            risk: "食品卫生问题、虚假宣传（夸大口感）；擦边玩梗（过度暴饮暴食博眼球、低俗互动、着装擦边）；职级越高，违规封禁概率越高",
+            risk: "食品卫生问题、虚假宣传（夸大口感）；擦边玩谐音梗（过度暴饮暴食博眼球、低俗互动、着装擦边）；职级越高，违规封禁概率越高",
             bonusEffects: { mood: 5, interactionBonus: 0.2, foodProfit: 0.25 }
         },
         {
@@ -611,7 +628,7 @@ const GameConfig = {
                 { name: "美妆品牌代言", rank: "头部达人", energyCost: 30, effects: { fans: 1000, profit: 5000, personaFit: 10 } }
             ],
             profitChannel: "美妆类广告报价+35%；美妆带货转化率+20%；职级每提升1级，转化率额外+4%",
-            risk: "美妆产品过敏、虚假宣传（夸大功效）；擦边玩梗（着装擦边、低俗妆容解读、过度营销擦边话术）；职级越高，品牌追责风险越高",
+            risk: "美妆产品过敏、虚假宣传（夸大功效）；擦边玩谐音梗（着装擦边、低俗妆容解读、过度营销擦边话术）；职级越高，品牌追责风险越高",
             bonusEffects: { personaFit: 10, beautyProfit: 0.35, conversionRate: 0.2 }
         },
         {
@@ -623,15 +640,16 @@ const GameConfig = {
                 { name: "日常vlog拍摄", rank: "素人", energyCost: 10, effects: { mood: 3, fans: 20 } },
                 { name: "生活好物分享", rank: "初级达人", energyCost: 15, effects: { fans: 60, profit: 250 } },
                 { name: "生活场景植入广告", rank: "中级达人", energyCost: 20, effects: { profit: 600, fans: 100 } },
-                { name: "生活类IP联名", rank: "头部达人", energyCost: 25, effects: { fans: 1200, profit: 4000 } }
+                { name: "生活类IP联名", rank: "进阶达人", energyCost: 22, effects: { fans: 500, profit: 2000 } },
+                { name: "生活类顶流合作", rank: "头部达人", energyCost: 25, effects: { fans: 1200, profit: 4000 } }
             ],
             profitChannel: "全品类商务邀约概率+25%；变现渠道无明显短板，稳定性强；职级每提升1级，全品类邀约概率额外+6%",
-            risk: "隐私泄露、内容低俗、植入广告过多；擦边玩梗（低俗日常片段、过度博眼球的场景演绎、擦边话术互动）；职级越高，内容审核越严格",
+            risk: "隐私泄露、内容低俗、植入广告过多；擦边玩谐音梗（低俗日常片段、过度博眼球的场景演绎、擦边话术互动）；职级越高，内容审核越严格",
             bonusEffects: { energy: 5, fanRetention: 0.1, diverseProfit: 0.25 }
         }
     ],
 
-    // 职级配置
+    // 职级配置（划分更细，反馈更足：9档）
     rankConfig: {
         "素人": { 
             minFans: 0,
@@ -643,43 +661,75 @@ const GameConfig = {
             nextRank: "初级达人"
         },
         "初级达人": { 
-            minFans: 1000,
-            minContentQuality: 30,
+            minFans: 500,
+            minContentQuality: 20,
             positiveBonus: 8, 
-            violationDeduct: 12, 
-            unlockCondition: "粉丝≥1000 + 内容质量≥30 + 违规＜10",
+            violationDeduct: 12,
+            progressFull: 10,
+            unlockCondition: "粉丝≥500 + 内容质量≥20 + 违规＜10",
+            nextRank: "新锐达人"
+        },
+        "新锐达人": { 
+            minFans: 1200,
+            minContentQuality: 28,
+            positiveBonus: 8, 
+            violationDeduct: 12,
+            progressFull: 18,
+            unlockCondition: "粉丝≥1200 + 内容质量≥28 + 违规＜12",
             nextRank: "中级达人"
         },
         "中级达人": { 
-            minFans: 5000,
-            minContentQuality: 50,
+            minFans: 2500,
+            minContentQuality: 40,
             positiveBonus: 10, 
-            violationDeduct: 14, 
-            unlockCondition: "粉丝≥5000 + 内容质量≥50 + 违规＜15 + 完成1次正向事件",
+            violationDeduct: 14,
+            progressFull: 26,
+            unlockCondition: "粉丝≥2500 + 内容质量≥40 + 违规＜15 + 完成1次正向事件",
+            nextRank: "进阶达人"
+        },
+        "进阶达人": { 
+            minFans: 5500,
+            minContentQuality: 48,
+            positiveBonus: 10, 
+            violationDeduct: 15,
+            progressFull: 34,
+            unlockCondition: "粉丝≥5500 + 内容质量≥48 + 违规＜17",
             nextRank: "高级达人"
         },
         "高级达人": { 
-            minFans: 20000,
-            minContentQuality: 70,
+            minFans: 12000,
+            minContentQuality: 55,
             positiveBonus: 12, 
-            violationDeduct: 16, 
-            unlockCondition: "粉丝≥20000 + 内容质量≥70 + 违规＜20 + 无职级负向违规",
+            violationDeduct: 16,
+            progressFull: 48,
+            unlockCondition: "粉丝≥12000 + 内容质量≥55 + 违规＜20 + 无职级负向违规",
             nextRank: "头部达人"
         },
         "头部达人": { 
-            minFans: 100000,
-            minContentQuality: 90,
+            minFans: 35000,
+            minContentQuality: 68,
+            positiveBonus: 13, 
+            violationDeduct: 18,
+            progressFull: 62,
+            unlockCondition: "粉丝≥35000 + 内容质量≥68 + 违规＜25 + 完成2次正向事件",
+            nextRank: "顶流达人"
+        },
+        "顶流达人": { 
+            minFans: 80000,
+            minContentQuality: 78,
             positiveBonus: 14, 
-            violationDeduct: 18, 
-            unlockCondition: "粉丝≥100000 + 内容质量≥90 + 违规＜25 + 完成2次正向事件",
+            violationDeduct: 19,
+            progressFull: 85,
+            unlockCondition: "粉丝≥80000 + 内容质量≥78 + 违规＜28",
             nextRank: "MCN签约"
         },
         "MCN签约": { 
-            minFans: 500000,
-            minContentQuality: 110,
+            minFans: 200000,
+            minContentQuality: 88,
             positiveBonus: 15, 
-            violationDeduct: 20, 
-            unlockCondition: "粉丝≥500000 + 内容质量≥110 + 违规＜30 + 累计收益≥100000",
+            violationDeduct: 20,
+            progressFull: 120,
+            unlockCondition: "粉丝≥200000 + 内容质量≥88 + 违规＜30 + 累计收益≥100000",
             nextRank: null
         }
     },
@@ -726,57 +776,47 @@ const GameConfig = {
         rent: 800,
         teamCostByRank: {
             "素人": 0,
-            "初级达人": 300,
-            "中级达人": 800,
-            "高级达人": 1500,
-            "头部达人": 3000,
+            "初级达人": 200,
+            "新锐达人": 450,
+            "中级达人": 700,
+            "进阶达人": 1100,
+            "高级达人": 1800,
+            "头部达人": 2800,
+            "顶流达人": 4000,
             "MCN签约": 5000
         }
     },
 
-    // 通用行动
+    // 合作类选项的二级选择：合作对象（谐音梗）
+    cooperationPartners: [
+        { id: 'laoganma', name: '老干码', tag: '谐音：老干妈。老在写代码，不上市不差钱' },
+        { id: 'weilong', name: '未龙', tag: '谐音：卫龙。尚未成龙，辣条先成' },
+        { id: 'erke', name: '红星二课', tag: '谐音：鸿星尔克。红色星星上两节课' },
+        { id: 'baixiang', name: '白相', tag: '谐音：白象。沪语「白相」就是玩，玩转泡面' },
+        { id: 'mixue', name: '密学冰成', tag: '谐音：蜜雪冰城。秘密学成，冰城出道' },
+        { id: 'yeshu', name: '爷树', tag: '谐音：椰树。爷叔种的树，从小喝到大' },
+        { id: 'luckin', name: '瑞杏', tag: '谐音：瑞幸。瑞气杏运，酱香翻盘' },
+        { id: 'dongyuhei', name: '懂语会', tag: '谐音：董宇辉。懂语言就会了，玉米六块' },
+        { id: 'xiaoyangge', name: '小样哥', tag: '谐音：小杨哥。小样儿，反向带货' },
+        { id: 'zhangtongxue', name: '涨同学', tag: '谐音：张同学。涨粉的同学，一镜到底' },
+        { id: 'fengchan', name: '风产姐妹', tag: '谐音：疯产姐妹。风头正产，不接广告' },
+        { id: 'lijiaqi', name: '里佳琪', tag: '谐音：李佳琦。里面的佳琪，所有女生' },
+        { id: 'liujianhong', name: '流耕宏', tag: '谐音：刘畊宏。流量耕种很宏，毽子操' },
+        { id: 'xdf', name: '心东方', tag: '谐音：新东方。心向东方，知识型直播' },
+        { id: 'naixue', name: '奶雪的茶', tag: '谐音：奈雪的茶。奶香雪顶，霸气系列' },
+        { id: 'huaxizi', name: '画西子', tag: '谐音：花西子。画中西子，国风美妆' },
+        { id: 'perfectdiary', name: '完美日寄', tag: '谐音：完美日记。每日寄送，大牌平替' },
+        { id: 'chaoren', name: '潮人', tag: '谐音：超人。潮流之人，男人的选择' }
+    ],
+
+    // 通用行动（按职级开放：rank 为解锁所需职级）
     commonActions: [
-        { 
-            name: "拍摄短视频", 
-            energyCost: 15, 
-            effects: { contentQuality: 3, fans: 20, savings: -200 },
-            description: "创作日常短视频内容（需投入制作成本）"
-        },
-        { 
-            name: "直播互动", 
-            energyCost: 20, 
-            effects: { mood: -5, fans: 50, profit: 150 },
-            description: "与粉丝进行直播互动"
-        },
-        { 
-            name: "接商务广告", 
-            energyCost: 10, 
-            effects: { personaFit: -2, profit: 300 },
-            description: "接受品牌商务合作"
-        },
-        { 
-            name: "学习提升", 
-            energyCost: 15, 
-            effects: { contentQuality: 5, personaFit: 3 },
-            description: "学习专业技能提升自己"
-        },
-        {
-            name: "能力训练",
-            energyCost: 0,
-            effects: {},
-            description: "选择训练方式提升角色属性"
-        },
-        {
-            name: "擦边试探",
-            energyCost: 0,
-            effects: {},
-            description: "选择擦边方向获取流量"
-        },
-        { 
-            name: "休息调整", 
-            energyCost: 0, 
-            effects: { mood: 10, energy: 20 },
-            description: "休息恢复精力和心态"
-        }
+        { name: "拍摄短视频", rank: "素人", energyCost: 15, effects: { contentQuality: 3, fans: 20, savings: -200 }, description: "创作日常短视频内容（需投入制作成本）" },
+        { name: "学习提升", rank: "素人", energyCost: 15, effects: { contentQuality: 5, personaFit: 3 }, description: "学习专业技能提升自己" },
+        { name: "能力训练", rank: "素人", energyCost: 0, effects: {}, description: "选择训练方式提升角色属性" },
+        { name: "休息调整", rank: "素人", energyCost: 0, effects: { mood: 10, energy: 20 }, description: "休息恢复精力和心态" },
+        { name: "接商务广告", rank: "初级达人", energyCost: 10, effects: { personaFit: -2, profit: 300 }, description: "接受品牌商务合作" },
+        { name: "擦边试探", rank: "初级达人", energyCost: 0, effects: {}, description: "选择擦边方向获取流量" },
+        { name: "直播互动", rank: "新锐达人", energyCost: 20, effects: { mood: -5, fans: 50, profit: 150 }, description: "与粉丝进行直播互动" }
     ]
 };

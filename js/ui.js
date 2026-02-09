@@ -40,6 +40,7 @@ class UIController {
         bind('rankup-confirm-btn', 'click', () => this.closeRankUpModal());
         bind('intro-confirm-btn', 'click', () => this.closeIntroModal());
         bind('result-confirm-btn', 'click', () => this.closeResultModal());
+        bind('partner-picker-cancel', 'click', () => this.closePartnerPicker());
         bind('message-btn', 'click', () => this.showMessages());
         bind('messages-close-btn', 'click', () => this.closeMessages());
         bind('platform-manage-btn', 'click', () => this.showPlatformManageMenu());
@@ -525,35 +526,38 @@ class UIController {
             return;
         }
         
-        actions.forEach(action => {
-            const btn = document.createElement('button');
-            btn.className = 'action-btn';
-            
-            // 计算能量显示文本
-            let energyText;
-            if (action.energyCost > 0) {
-                // 消耗精力
-                energyText = `-${action.energyCost}精力`;
-            } else if (action.energyCost < 0) {
-                // 恢复精力（通过负消耗）
-                energyText = `+${Math.abs(action.energyCost)}精力`;
-            } else if (action.energyCost === 0 && action.effects && action.effects.energy) {
-                // energyCost为0但effects中有能量恢复
-                const energyGain = action.effects.energy;
-                energyText = energyGain > 0 ? `+${energyGain}精力` : `${energyGain}精力`;
-            } else {
-                // 不涉及精力消耗或恢复
-                energyText = `${action.description || ''}`;
-            }
-            
-            btn.textContent = `${action.name} (${energyText})`;
-            
-            if (!game.canTakeAction() || (action.energyCost > 0 && state.energy < action.energyCost)) {
-                btn.disabled = true;
-            }
-            
-            btn.addEventListener('click', () => this.performAction(action.name));
-            container.appendChild(btn);
+        const common = actions.filter(a => a.categoryType === 'common');
+        const exclusive = actions.filter(a => a.categoryType === 'exclusive');
+        const groups = [];
+        if (common.length) groups.push({ title: '通用行动', list: common });
+        if (exclusive.length) groups.push({ title: (exclusive[0].categoryName || '本类') + '专属', list: exclusive });
+        
+        groups.forEach(group => {
+            const titleEl = document.createElement('div');
+            titleEl.className = 'action-group-title';
+            titleEl.textContent = group.title;
+            container.appendChild(titleEl);
+            group.list.forEach(action => {
+                const btn = document.createElement('button');
+                btn.className = 'action-btn';
+                let energyText;
+                if (action.energyCost > 0) {
+                    energyText = `-${action.energyCost}精力`;
+                } else if (action.energyCost < 0) {
+                    energyText = `+${Math.abs(action.energyCost)}精力`;
+                } else if (action.energyCost === 0 && action.effects && action.effects.energy) {
+                    const energyGain = action.effects.energy;
+                    energyText = energyGain > 0 ? `+${energyGain}精力` : `${energyGain}精力`;
+                } else {
+                    energyText = action.description || '';
+                }
+                btn.textContent = `${action.name} (${energyText})`;
+                if (!game.canTakeAction() || (action.energyCost > 0 && state.energy < action.energyCost)) {
+                    btn.disabled = true;
+                }
+                btn.addEventListener('click', () => this.performAction(action.name));
+                container.appendChild(btn);
+            });
         });
     }
 
@@ -695,15 +699,67 @@ class UIController {
             btn.textContent = suffixes.length > 0 ? `${baseText}（${suffixes.join(' / ')}）` : baseText;
             btn.disabled = !(eligible && affordable);
             
-            btn.addEventListener('click', () => this.handleEventOption(event, index));
+            btn.addEventListener('click', () => {
+                if (this.isCoopOption(option)) {
+                    this.pendingCoop = { event, optionIndex };
+                    this.showPartnerPicker();
+                } else {
+                    this.handleEventOption(event, index);
+                }
+            });
             optionsContainer.appendChild(btn);
         });
         
         modal.classList.add('active');
     }
 
-    // 处理事件选项
-    handleEventOption(event, optionIndex) {
+    // 判断是否为合作类选项（需要二级选合作对象）
+    isCoopOption(option) {
+        if (!option) return false;
+        if (option.isCoopChoice === true) return true;
+        const t = (option.text || '').trim();
+        const coopKeywords = ['合作', '代言', '联名', '签约', '邀约', '接受合作', '接广告'];
+        const isCoopText = coopKeywords.some(kw => t.includes(kw));
+        const isPositive = option.type === 'positive' && option.effects && (option.effects.profit > 0 || option.effects.fans > 0);
+        if (isCoopText && isPositive) return true;
+        return false;
+    }
+
+    // 显示合作对象选择弹窗
+    showPartnerPicker() {
+        const listEl = document.getElementById('partner-picker-list');
+        if (!listEl) return;
+        const partners = GameConfig.cooperationPartners || [];
+        const shuffled = partners.slice().sort(() => Math.random() - 0.5);
+        const showCount = Math.min(9, shuffled.length);
+        listEl.innerHTML = '';
+        shuffled.slice(0, showCount).forEach(partner => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'option-btn partner-option';
+            btn.innerHTML = `<span class="partner-name">${partner.name}</span><span class="partner-tag">${partner.tag}</span>`;
+            btn.addEventListener('click', () => {
+                this.closePartnerPicker();
+                if (this.pendingCoop) {
+                    const { event, optionIndex } = this.pendingCoop;
+                    this.pendingCoop = null;
+                    this.handleEventOption(event, optionIndex, partner);
+                }
+            });
+            listEl.appendChild(btn);
+        });
+        const modal = document.getElementById('partner-picker-modal');
+        if (modal) modal.classList.add('active');
+    }
+
+    closePartnerPicker() {
+        this.pendingCoop = null;
+        const modal = document.getElementById('partner-picker-modal');
+        if (modal) modal.classList.remove('active');
+    }
+
+    // 处理事件选项（partner 为合作类二级选择时传入）
+    handleEventOption(event, optionIndex, partner) {
         const option = event.options[optionIndex];
         const beforeState = {
             energy: game.state.energy,
@@ -716,7 +772,7 @@ class UIController {
             attributes: { ...(game.state.attributes || {}) }
         };
         
-        game.handleEventOption(event, optionIndex);
+        game.handleEventOption(event, optionIndex, partner);
         if (this.currentMessageId != null) {
             game.deleteMessage(this.currentMessageId);
             this.currentMessageId = null;
