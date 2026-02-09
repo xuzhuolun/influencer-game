@@ -374,9 +374,10 @@ class InfluencerGame {
         }
         if (key === 'contentQuality') {
             let finalValue = value > 0 ? Math.round(value * this.getAttributeMultiplier('contentQuality')) : value;
-            // 应用平台内容质量加成
+            // 应用平台内容质量加成（正向收益时确保不被加成算成负值）
             if (finalValue > 0) {
                 finalValue = Math.round(finalValue * this.getPlatformBonus('contentBonus'));
+                finalValue = Math.max(1, finalValue);
             }
             this.state.contentQuality = Math.max(0, Math.min(100, this.state.contentQuality + finalValue));
             results.push(`内容质量${finalValue > 0 ? '+' : ''}${finalValue}`);
