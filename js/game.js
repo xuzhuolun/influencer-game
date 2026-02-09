@@ -7,6 +7,7 @@ class InfluencerGame {
             gender: null,
             avatarId: null,
             category: null,
+            platform: null,  // 当前平台
             rank: '素人',
             month: 1,
             year: 2026,
@@ -41,7 +42,17 @@ class InfluencerGame {
             deferredEvents: {},
             trainingCount: 0,
             actionCount: 0,
-            lastRankUp: null
+            lastRankUp: null,
+            messages: [],  // 助理消息队列
+            messageIdCounter: 1,  // 消息ID计数器
+            subPlatforms: [],  // 副平台账号列表
+            deferredOnboarding: [],  // 延迟的引导消息队列
+            edgeCount: 0,  // 擦边次数累计
+            edgeEscalationLevel: 0,  // 已触发的擦边等级
+            lastMonthStats: {  // 上个月的数据统计
+                fans: 0,
+                savings: 5000
+            }
         };
         
         this.eventLog = [];
@@ -56,6 +67,7 @@ class InfluencerGame {
             gender: null,
             avatarId: null,
             category: null,
+            platform: null,
             rank: '素人',
             completedPositiveEvents: [],
             hasRankViolation: false,
@@ -67,7 +79,17 @@ class InfluencerGame {
             deferredEvents: {},
             trainingCount: 0,
             actionCount: 0,
-            lastRankUp: null
+            lastRankUp: null,
+            deferredOnboarding: [],
+            messages: [],
+            messageIdCounter: 1,
+            subPlatforms: [],
+            edgeCount: 0,
+            edgeEscalationLevel: 0,
+            lastMonthStats: {
+                fans: 0,
+                savings: 5000
+            }
         };
         this.eventLog = [];
         this.currentMonthActions = [];
@@ -330,10 +352,17 @@ class InfluencerGame {
             const finalValue = value > 0 ? Math.round(value * this.getAttributeMultiplier('mood')) : value;
             this.state.mood = Math.max(0, Math.min(100, this.state.mood + finalValue));
             results.push(`心态${finalValue > 0 ? '+' : ''}${finalValue}`);
+            if (this.state.mood <= 0) {
+                this.gameOver('心态炸了，游戏结束');
+            }
             return;
         }
         if (key === 'contentQuality') {
-            const finalValue = value > 0 ? Math.round(value * this.getAttributeMultiplier('contentQuality')) : value;
+            let finalValue = value > 0 ? Math.round(value * this.getAttributeMultiplier('contentQuality')) : value;
+            // 应用平台内容质量加成
+            if (finalValue > 0) {
+                finalValue = Math.round(finalValue * this.getPlatformBonus('contentBonus'));
+            }
             this.state.contentQuality = Math.max(0, Math.min(100, this.state.contentQuality + finalValue));
             results.push(`内容质量${finalValue > 0 ? '+' : ''}${finalValue}`);
             return;
@@ -346,7 +375,11 @@ class InfluencerGame {
         }
         if (key === 'fans') {
             const baseValue = value > 0 ? Math.floor(value * this.state.fanGrowthRate) : value;
-            const finalValue = value > 0 ? Math.floor(baseValue * this.getAttributeMultiplier('fans')) : value;
+            let finalValue = value > 0 ? Math.floor(baseValue * this.getAttributeMultiplier('fans')) : value;
+            // 应用平台加成
+            if (finalValue > 0) {
+                finalValue = Math.floor(finalValue * this.getPlatformBonus('fanGrowth'));
+            }
             this.state.fans = Math.max(0, this.state.fans + finalValue);
             results.push(`粉丝${finalValue > 0 ? '+' : ''}${finalValue}`);
             return;
@@ -355,6 +388,8 @@ class InfluencerGame {
             let finalValue = value > 0 ? Math.floor(value * this.getAttributeMultiplier('profit')) : value;
             if (finalValue > 0) {
                 finalValue = Math.floor(finalValue * this.getFanProfitMultiplier());
+                // 应用平台加成
+                finalValue = Math.floor(finalValue * this.getPlatformBonus('profitRate'));
                 this.state.profit += finalValue;
                 this.state.savings += finalValue;
                 results.push(`收益+¥${Math.abs(finalValue)}`);
@@ -404,8 +439,12 @@ class InfluencerGame {
             return;
         }
         if (key === 'rankProgress') {
-            this.state.rankProgress += value;
-            results.push(`进度${value > 0 ? '+' : ''}${value}`);
+            // 将进度转换为内容质量增长
+            const contentQualityGain = Math.floor(value * 0.5);
+            if (contentQualityGain !== 0) {
+                this.state.contentQuality = Math.max(0, this.state.contentQuality + contentQualityGain);
+                results.push(`内容质量${contentQualityGain > 0 ? '+' : ''}${contentQualityGain}`);
+            }
             return;
         }
         if (key === 'attribute') {
@@ -497,6 +536,85 @@ class InfluencerGame {
         
         this.addLog(`选择了 ${category.name} 类别！`);
         return true;
+    }
+
+    // 选择平台
+    selectPlatform(platformId) {
+        const platform = GameConfig.platforms[platformId];
+        if (!platform) return false;
+        
+        this.state.platform = platform;
+        this.addLog(`选择了平台：${platform.name} ${platform.icon}`, 'positive');
+        
+        // 触发平台入驻引导消息
+        this.triggerPlatformOnboarding(platformId);
+        
+        return true;
+    }
+
+    // 触发平台入驻引导事件
+    triggerPlatformOnboarding(platformId) {
+        const onboardingEvents = GameConfig.platformOnboarding?.[platformId];
+        if (!onboardingEvents || !Array.isArray(onboardingEvents)) return;
+        
+        // 将所有引导消息加入助理消息队列
+        onboardingEvents.forEach((event, index) => {
+            // 第一条立即加入，后续标记延迟（第二个月触发）
+            if (index === 0) {
+                this.addMessage(event, true);  // 第一条标记为紧急
+                this.addLog(`📱 收到${this.state.platform.name}平台引导消息`, 'positive');
+            } else {
+                // 后续引导消息存入延迟队列，下个月触发
+                if (!this.state.deferredOnboarding) {
+                    this.state.deferredOnboarding = [];
+                }
+                this.state.deferredOnboarding.push(event);
+            }
+        });
+    }
+
+    // 检查并触发延迟的引导消息
+    checkDeferredOnboarding() {
+        if (!this.state.deferredOnboarding || this.state.deferredOnboarding.length === 0) return;
+        
+        const event = this.state.deferredOnboarding.shift();
+        if (event) {
+            this.addMessage(event, false);
+            this.addLog(`📱 收到助理后续引导消息：${event.title}`, 'normal');
+        }
+    }
+
+    // 切换平台
+    switchPlatform(newPlatformId) {
+        const newPlatform = GameConfig.platforms[newPlatformId];
+        if (!newPlatform || !this.state.platform) return { success: false, message: '平台不存在' };
+        
+        if (this.state.platform.id === newPlatformId) {
+            return { success: false, message: '已经在该平台了' };
+        }
+        
+        const oldPlatform = this.state.platform;
+        const fansLost = Math.floor(this.state.fans * newPlatform.switchCost);
+        
+        this.state.platform = newPlatform;
+        this.state.fans = Math.max(0, this.state.fans - fansLost);
+        
+        this.addLog(`从 ${oldPlatform.name} 切换到 ${newPlatform.name}，损失了 ${fansLost.toLocaleString()} 粉丝`, 'negative');
+        
+        // 切换平台后也触发新平台的引导消息
+        this.triggerPlatformOnboarding(newPlatformId);
+        
+        return { 
+            success: true, 
+            fansLost,
+            message: `切换到${newPlatform.name}，损失${fansLost.toLocaleString()}粉丝`
+        };
+    }
+
+    // 获取平台加成
+    getPlatformBonus(type) {
+        if (!this.state.platform) return 1;
+        return this.state.platform.bonuses[type] || 1;
     }
 
     // 获取可用行动
@@ -596,13 +714,15 @@ class InfluencerGame {
         this.state.chainQueue[nextKey] = chainEventId;
     }
 
-    // 延后年度事件，保证触发
+    // 延后年度事件，保证触发（支持 id 或 severity，擦边事件用 severity）
     enqueueDeferredEvent(event, year, month) {
         const key = `${year}-${month}`;
         if (!this.state.deferredEvents[key]) {
             this.state.deferredEvents[key] = [];
         }
-        this.state.deferredEvents[key].push({ source: event.source, id: event.id });
+        const payload = { source: event.source, id: event.id };
+        if (event.severity !== undefined) payload.severity = event.severity;
+        this.state.deferredEvents[key].push(payload);
     }
 
     // 获取本月延后事件
@@ -628,6 +748,14 @@ class InfluencerGame {
                 this.state.timelineEventsTriggered[event.id] = true;
                 return event;
             }
+            return null;
+        }
+        if (item.source === 'edge') {
+            const list = Array.isArray(EdgeEscalationEvents) ? EdgeEscalationEvents : [];
+            const event = item.severity !== undefined
+                ? list.find(e => e.severity === item.severity)
+                : list.find(e => e.id === item.id);
+            if (event) return event;
             return null;
         }
         return null;
@@ -860,7 +988,9 @@ class InfluencerGame {
         
         const categoryKey = categoryMap[categoryName] || "lifestyle";
         const events = EventLibrary[categoryKey].edgeTemptation;
-        return this.pickEligibleEvent(events);
+        const event = this.pickEligibleEvent(events);
+        if (event) event.isEdge = true;
+        return event;
     }
 
 
@@ -870,7 +1000,8 @@ class InfluencerGame {
             // 正向事件
             {
                 title: "平台推荐位",
-                description: "你的内容获得平台首页推荐，流量暴涨！",
+                description: "📱 助理来信：好消息！平台运营团队通知，你的内容被选中获得首页推荐位！这是难得的流量曝光机会，建议你可以考虑加大投放力度，或者保持稳定输出。",
+                isMessage: true,
                 options: [
                     {
                         text: "把握机会，多发优质内容（投流）",
@@ -881,6 +1012,11 @@ class InfluencerGame {
                         text: "保持节奏，稳定输出",
                         effects: { fans: 300, personaFit: 5, rankProgress: 5 },
                         type: 'positive'
+                    },
+                    {
+                        text: "全力冲刺，加大投入",
+                        effects: { fans: 1000, contentQuality: 3, energy: -25, savings: -1200 },
+                        type: 'mixed'
                     }
                 ]
             },
@@ -907,13 +1043,19 @@ class InfluencerGame {
                 ]
             },
             {
-                title: "媒体报道",
-                description: "传统媒体报道了你的事迹，影响力扩大！",
+                title: "媒体采访邀请",
+                description: "📱 助理通知：某知名媒体想要采访你，报道你的创作故事和成长经历！这是提升个人品牌影响力的好机会，但需要准备采访内容和配合拍摄。",
+                isMessage: true,
                 options: [
                     {
                         text: "接受采访，扩大宣传",
-                        effects: { fans: 1000, personaFit: 10, rankProgress: 12, savings: -300 },
+                        effects: { fans: 1000, personaFit: 10, rankProgress: 12, savings: -300, energy: -10 },
                         type: 'positive'
+                    },
+                    {
+                        text: "低调拒绝，专注内容",
+                        effects: { contentQuality: 5, mood: 5 },
+                        type: 'neutral'
                     }
                 ]
             },
@@ -949,20 +1091,26 @@ class InfluencerGame {
             },
             {
                 title: "品牌形象大使邀约",
-                description: "某品牌希望邀请女性/男性形象代言，条件匹配后优先合作。",
+                description: "📱 助理来电：某知名品牌希望邀请你作为形象大使！对方开出了不错的代言费，但需要你参加多场活动。这会占用不少时间和精力，请权衡利弊。",
+                isMessage: true,
                 requirements: {
                     genders: ["female"]
                 },
                 options: [
                     {
                         text: "接受邀约，提升曝光",
-                        effects: { profit: 3000, fans: 1000, personaFit: 6, rankProgress: 8 },
+                        effects: { profit: 3000, fans: 1000, personaFit: 6, rankProgress: 8, energy: -10 },
                         type: 'positive'
                     },
                     {
                         text: "谨慎合作，保持人设",
                         effects: { personaFit: 10, contentQuality: 5, rankProgress: 6 },
                         type: 'mixed'
+                    },
+                    {
+                        text: "婉拒邀约，专注内容",
+                        effects: { contentQuality: 8, mood: 5 },
+                        type: 'neutral'
                     }
                 ]
             },
@@ -1056,23 +1204,31 @@ class InfluencerGame {
             // 抉择事件
             {
                 title: "MCN签约邀约",
-                description: "有MCN机构邀请你签约，提供资源但要分成...",
+                description: "📱 助理重要通知：有实力MCN机构正式发来签约邀请！他们承诺提供专业团队、推广资源和商务对接，但需要你让出30%的分成权。这是影响职业发展的重要决策，请慎重考虑。",
+                isMessage: true,
+                isUrgent: true,
                 options: [
                     {
                         text: "接受签约，借助资源",
-                        effects: { fans: 1000, profit: 2000, personaFit: -5, rankProgress: 10 },
+                        effects: { fans: 1000, profit: 2000, personaFit: -5, rankProgress: 10, savings: -1000 },
                         type: 'mixed'
                     },
                     {
                         text: "拒绝签约，保持独立",
                         effects: { personaFit: 10, mood: 5, rankProgress: 5 },
                         type: 'mixed'
+                    },
+                    {
+                        text: "提出更优条件再谈",
+                        effects: { mood: -5, energy: -10 },
+                        type: 'neutral'
                     }
                 ]
             },
             {
                 title: "跨界合作机会",
-                description: "其他领域的博主邀请你跨界合作，可能带来新粉丝...",
+                description: "📱 助理来信：另一个垂直领域的头部博主想和你跨界合作，制作一期联名内容。对方在他的领域有100万+粉丝，这次合作或许能帮你打开新圈层、获得流量曝光，但也可能稀释你的专业形象。",
+                isMessage: true,
                 options: [
                     {
                         text: "接受合作，拓宽领域",
@@ -1083,16 +1239,23 @@ class InfluencerGame {
                         text: "拒绝合作，专注主业",
                         effects: { personaFit: 8, contentQuality: 5, rankProgress: 8 },
                         type: 'mixed'
+                    },
+                    {
+                        text: "提议互惠合作",
+                        effects: { fans: 500, profit: 800, contentQuality: 3, energy: -15 },
+                        type: 'mixed'
                     }
                 ]
             },
             {
                 title: "高价广告诱惑",
-                description: "有品牌出高价要求你做广告，但产品质量一般...",
+                description: "📱 助理紧急通知：有品牌开出¥15,000的高价广告费希望你代言推广！但你的助理私下调查发现这个产品口碑一般、质量堪忧，甚至有消费者投诉记录。短期利益和长期口碑，你如何选择？",
+                isMessage: true,
+                isUrgent: true,
                 options: [
                     {
                         text: "接受广告，赚取收益",
-                        effects: { profit: 5000, fans: -200, personaFit: -10, contentQuality: -8 },
+                        effects: { profit: 5000, fans: -200, personaFit: -10, contentQuality: -8, mood: -5 },
                         type: 'mixed'
                     },
                     {
@@ -1120,6 +1283,161 @@ class InfluencerGame {
                         text: "不予理会，专注内容",
                         effects: { personaFit: 8, contentQuality: 5, fans: -100 },
                         type: 'positive'
+                    }
+                ]
+            },
+            {
+                title: "综艺节目邀约",
+                description: "📱 助理消息：某热门综艺节目组邀请你作为飞行嘉宾参加录制！节目播出后预计能带来大量曝光，但录制需要2天时间，且不确定剪辑效果如何。",
+                isMessage: true,
+                options: [
+                    {
+                        text: "接受邀约",
+                        effects: { fans: 2000, profit: 3000, energy: -25, mood: 10 },
+                        type: 'positive'
+                    },
+                    {
+                        text: "要求查看剪辑权",
+                        effects: { fans: 1500, profit: 2000, energy: -20, personaFit: 5 },
+                        type: 'mixed'
+                    },
+                    {
+                        text: "婉拒邀约",
+                        effects: { mood: 5, contentQuality: 5 },
+                        type: 'neutral'
+                    }
+                ]
+            },
+            {
+                title: "电商平台合作",
+                description: "📱 助理来信：某头部电商平台想邀请你入驻开设店铺！他们会提供流量扶持和供应链支持，但需要你投入时间运营店铺。这是拓展变现渠道的机会。",
+                isMessage: true,
+                options: [
+                    {
+                        text: "开设店铺，拓展业务",
+                        effects: { profit: 4000, savings: -2000, energy: -20, personaFit: -5 },
+                        type: 'mixed'
+                    },
+                    {
+                        text: "只做推广不开店",
+                        effects: { profit: 2000, personaFit: 3 },
+                        type: 'mixed'
+                    },
+                    {
+                        text: "婉拒合作",
+                        effects: { contentQuality: 5, personaFit: 8 },
+                        type: 'neutral'
+                    }
+                ]
+            },
+            {
+                title: "线下活动邀请",
+                description: "📱 助理通知：某商场邀请你参加线下粉丝见面会，承诺提供场地和宣传支持。这是增进粉丝粘性的好机会，但需要你准备活动内容和现场互动。",
+                isMessage: true,
+                options: [
+                    {
+                        text: "接受邀请，举办见面会",
+                        effects: { fans: 800, personaFit: 15, mood: 10, energy: -20, savings: -1000 },
+                        type: 'positive'
+                    },
+                    {
+                        text: "协商线上直播互动",
+                        effects: { fans: 500, personaFit: 8, energy: -10, savings: -300 },
+                        type: 'mixed'
+                    },
+                    {
+                        text: "婉拒活动",
+                        effects: { energy: 5 },
+                        type: 'neutral'
+                    }
+                ]
+            },
+            {
+                title: "出版社约稿邀请",
+                description: "📱 助理转达：某知名出版社想邀请你出版个人作品集或经验分享书籍！这对提升个人IP价值很有帮助，但写书需要大量时间投入。",
+                isMessage: true,
+                options: [
+                    {
+                        text: "接受约稿，准备出书",
+                        effects: { profit: 6000, personaFit: 20, contentQuality: 10, energy: -30, savings: -2000 },
+                        type: 'positive'
+                    },
+                    {
+                        text: "先出电子书试水",
+                        effects: { profit: 3000, personaFit: 12, energy: -15, savings: -800 },
+                        type: 'mixed'
+                    },
+                    {
+                        text: "婉拒约稿",
+                        effects: { contentQuality: 5 },
+                        type: 'neutral'
+                    }
+                ]
+            },
+            {
+                title: "知识付费平台邀请",
+                description: "📱 助理来信：某头部知识付费平台邀请你开设付费专栏/课程！他们承诺流量扶持和分成比例优惠。这是知识变现的好渠道，但需要系统化内容制作。",
+                isMessage: true,
+                options: [
+                    {
+                        text: "开设付费课程",
+                        effects: { profit: 5000, contentQuality: 12, personaFit: 8, energy: -25, savings: -1500 },
+                        type: 'positive'
+                    },
+                    {
+                        text: "先做免费试听课",
+                        effects: { profit: 2000, contentQuality: 8, fans: 500, energy: -15 },
+                        type: 'mixed'
+                    },
+                    {
+                        text: "婉拒邀请",
+                        effects: { mood: 5 },
+                        type: 'neutral'
+                    }
+                ]
+            },
+            {
+                title: "视频平台签约主播",
+                description: "📱 助理通知：平台运营团队想与你签订\u201C独家创作者协议\u201D！签约后你将享受流量扶持、现金补贴和优先推荐，但3年内不能在其他平台发布内容。",
+                isMessage: true,
+                isUrgent: true,
+                options: [
+                    {
+                        text: "签订独家协议",
+                        effects: { profit: 8000, fans: 1500, contentQuality: 5, personaFit: -8, rankProgress: 10 },
+                        type: 'mixed'
+                    },
+                    {
+                        text: "谈判更优条件",
+                        effects: { profit: 5000, fans: 1000, energy: -15, mood: -10 },
+                        type: 'mixed'
+                    },
+                    {
+                        text: "婉拒签约，保持自由",
+                        effects: { personaFit: 12, mood: 10 },
+                        type: 'neutral'
+                    }
+                ]
+            },
+            {
+                title: "品牌联名产品开发",
+                description: "📱 助理重要消息：某品牌想邀请你共同开发联名产品（如服饰、周边等）！你将获得设计权和销售分成，但需要投入大量时间参与产品开发。",
+                isMessage: true,
+                options: [
+                    {
+                        text: "全力投入开发",
+                        effects: { profit: 6000, personaFit: 15, contentQuality: 8, energy: -30, savings: -2500 },
+                        type: 'positive'
+                    },
+                    {
+                        text: "只参与设计顾问",
+                        effects: { profit: 3000, personaFit: 8, energy: -15, savings: -1000 },
+                        type: 'mixed'
+                    },
+                    {
+                        text: "婉拒开发邀请",
+                        effects: { contentQuality: 8, mood: 5 },
+                        type: 'neutral'
                     }
                 ]
             },
@@ -1252,6 +1570,12 @@ class InfluencerGame {
         if (event.title === '能力训练') {
             this.state.trainingCount += 1;
         }
+
+        // 统计擦边次数并触发专属事件
+        if (this.isEdgeChoice(event, option)) {
+            this.state.edgeCount += 1;
+            this.checkEdgeEscalation();
+        }
         
         // 记录日志
         const logType = option.type === 'positive' ? 'positive' : 'negative';
@@ -1266,34 +1590,134 @@ class InfluencerGame {
         return results;
     }
 
+    // 判断是否属于擦边选择
+    isEdgeChoice(event, option) {
+        if (!event || !option) return false;
+        const effects = option.effects || {};
+        const hasEdgeEffect = Object.prototype.hasOwnProperty.call(effects, 'edgeFans') ||
+            Object.prototype.hasOwnProperty.call(effects, 'edgeProfit');
+        if (hasEdgeEffect) return true;
+        const titleEdge = typeof event.title === 'string' && event.title.includes('擦边');
+        const isEdgeEvent = !!event.isEdge || titleEdge;
+        return isEdgeEvent && option.type !== 'positive';
+    }
+
+    // 获取当前职级对应的擦边触发阈值 [第1档, 第2档, 第3档]
+    getEdgeThresholdsForCurrentRank() {
+        const config = GameConfig.edgeEscalationConfig;
+        if (!config || !config.rankThresholds) return [5, 10, 15];
+        const rank = this.state.rank || '素人';
+        return config.rankThresholds[rank] || [5, 10, 15];
+    }
+
+    // 根据职级+粉丝量计算擦边事件严重度 0~3（职级越高、粉丝越多越严重）
+    getEdgeSeverityLevel() {
+        const rankOrder = ['素人', '初级达人', '中级达人', '高级达人', '头部达人', 'MCN签约'];
+        const rankIndex = rankOrder.indexOf(this.state.rank || '素人');
+        const fans = this.state.fans || 0;
+        const bands = GameConfig.edgeEscalationConfig?.fanSeverityBands || [10000, 100000, 500000];
+        let fanTier = 0;
+        if (fans >= bands[2]) fanTier = 3;
+        else if (fans >= bands[1]) fanTier = 2;
+        else if (fans >= bands[0]) fanTier = 1;
+        const severity = Math.min(3, Math.max(0, rankIndex + fanTier - 2));
+        return severity;
+    }
+
+    // 检查擦边次数并触发专属事件（阈值按职级，严重度按职级+粉丝）
+    checkEdgeEscalation() {
+        const config = GameConfig.edgeEscalationConfig;
+        if (!config) return;
+
+        const thresholds = this.getEdgeThresholdsForCurrentRank();
+        const nextLevel = this.state.edgeEscalationLevel || 0;
+        if (nextLevel >= thresholds.length) return;
+
+        const threshold = thresholds[nextLevel];
+        if (this.state.edgeCount >= threshold) {
+            let severity = this.getEdgeSeverityLevel();
+            severity = Math.min(3, severity + nextLevel);
+            const edgeEvent = Array.isArray(EdgeEscalationEvents)
+                ? EdgeEscalationEvents.find(e => e.severity === severity)
+                : null;
+            if (edgeEvent && edgeEvent.id) {
+                this.enqueueDeferredEvent({ source: 'edge', severity }, this.state.year, this.state.month);
+                this.state.edgeEscalationLevel = nextLevel + 1;
+                this.addLog(`擦边次数达到${threshold}（职级：${this.state.rank}），触发：${edgeEvent.title}`, 'warning');
+            }
+        }
+    }
+
 
     // 月度结算
     monthlySettle() {
+        // 保存结算前的数据用于对比
+        const beforeSettlement = {
+            fans: this.state.fans,
+            savings: this.state.savings
+        };
+        
         const score = this.calculateMonthlyScore();
-        let rating, progressAdd;
+        let rating, contentQualityBonus;
         
         if (score >= GameConfig.monthlySettle.excellent.score) {
             rating = GameConfig.monthlySettle.excellent.name;
-            progressAdd = GameConfig.monthlySettle.excellent.progressAdd;
+            contentQualityBonus = Math.floor(GameConfig.monthlySettle.excellent.progressAdd * 0.3);
         } else if (score >= GameConfig.monthlySettle.good.score) {
             rating = GameConfig.monthlySettle.good.name;
-            progressAdd = GameConfig.monthlySettle.good.progressAdd;
+            contentQualityBonus = Math.floor(GameConfig.monthlySettle.good.progressAdd * 0.3);
         } else if (score >= GameConfig.monthlySettle.qualified.score) {
             rating = GameConfig.monthlySettle.qualified.name;
-            progressAdd = GameConfig.monthlySettle.qualified.progressAdd;
+            contentQualityBonus = Math.floor(GameConfig.monthlySettle.qualified.progressAdd * 0.3);
         } else {
             rating = GameConfig.monthlySettle.unqualified.name;
-            progressAdd = GameConfig.monthlySettle.unqualified.progressAdd;
+            contentQualityBonus = Math.floor(GameConfig.monthlySettle.unqualified.progressAdd * 0.3);
         }
         
-        this.state.rankProgress += progressAdd;
+        if (contentQualityBonus > 0) {
+            this.state.contentQuality += contentQualityBonus;
+        } else if (contentQualityBonus < 0) {
+            this.state.contentQuality = Math.max(0, this.state.contentQuality + contentQualityBonus);
+        }
+        
+        // 人设契合或内容质量归零时，月度结算掉粉
+        const cq = this.state.contentQuality || 0;
+        const pf = this.state.personaFit || 0;
+        if (cq <= 0 || pf <= 0) {
+            const fanLoss = Math.min(this.state.fans, Math.floor(this.state.fans * 0.05) + 50);
+            if (fanLoss > 0) {
+                this.state.fans = Math.max(0, this.state.fans - fanLoss);
+                this.addLog(`内容质量或人设契合过低，本月掉粉 ${fanLoss.toLocaleString()}`, 'negative');
+            }
+        }
+        
+        // 计算副平台账号收益
+        const subPlatformResult = this.calculateSubPlatformMonthly();
+        if (subPlatformResult.details.length > 0) {
+            this.state.savings += subPlatformResult.netIncome;
+            this.state.profit += subPlatformResult.totalIncome;
+            
+            subPlatformResult.details.forEach(detail => {
+                this.addLog(
+                    `${detail.icon} ${detail.platform}：收益¥${detail.income} - 维护¥${detail.cost} = ¥${detail.income - detail.cost}，涨粉${detail.fansGrowth}`, 
+                    detail.income > detail.cost ? 'positive' : 'negative'
+                );
+            });
+            
+            if (subPlatformResult.netIncome > 0) {
+                this.addLog(`副平台净收益：¥${subPlatformResult.netIncome.toLocaleString()}`, 'positive');
+            } else if (subPlatformResult.netIncome < 0) {
+                this.addLog(`副平台净亏损：¥${Math.abs(subPlatformResult.netIncome).toLocaleString()}`, 'negative');
+            }
+        }
+        
         const expenses = this.getMonthlyExpenses();
         if (expenses.total > 0) {
             this.state.savings -= expenses.total;
             this.addLog(`固定支出：房租¥${expenses.rent} + 团队成本¥${expenses.teamCost} = ¥${expenses.total}`, 'negative');
             if (this.state.savings <= 0) {
                 this.gameOver('存款归零，资金链断裂，游戏结束');
-                return { score, rating, progressAdd, currentRank: this.state.rank, rankProgress: this.state.rankProgress, expenses };
+                return { score, rating, contentQualityBonus, currentRank: this.state.rank, expenses, subPlatformResult };
             }
         }
         this.carryDeferredEventsToNextMonth(this.state.year, this.state.month);
@@ -1308,12 +1732,27 @@ class InfluencerGame {
         this.state.trainingCount = 0;
         this.state.actionCount = 0;
         
+        // 计算月度变化
+        const monthlyChange = {
+            fans: this.state.fans - this.state.lastMonthStats.fans,
+            savings: this.state.savings - this.state.lastMonthStats.savings
+        };
+        
+        // 更新上个月的统计数据
+        this.state.lastMonthStats = {
+            fans: this.state.fans,
+            savings: this.state.savings
+        };
+        
+        // 检查是否有延迟的引导消息要触发
+        this.checkDeferredOnboarding();
+        
         // 检查是否可以晋级
         this.checkRankUp();
         
         // 检查游戏结束条件
         if (this.state.mood <= 0) {
-            this.gameOver('心态崩溃，退出网红圈');
+            this.gameOver('心态炸了，游戏结束');
         }
         if (this.state.savings <= 0) {
             this.gameOver('存款归零，资金链断裂，游戏结束');
@@ -1322,10 +1761,15 @@ class InfluencerGame {
         return {
             score,
             rating,
-            progressAdd,
+            contentQualityBonus,
             currentRank: this.state.rank,
-            rankProgress: this.state.rankProgress,
-            expenses
+            expenses,
+            subPlatformResult,
+            monthlyChange,
+            currentStats: {
+                fans: this.state.fans,
+                savings: this.state.savings
+            }
         };
     }
 
@@ -1378,6 +1822,8 @@ class InfluencerGame {
                 const prevRank = this.state.rank;
                 this.state.rank = currentRankConfig.nextRank;
                 this.state.rankProgress = 0;
+                this.state.edgeCount = 0;
+                this.state.edgeEscalationLevel = 0;
                 this.addLog(`🎉 恭喜晋级到 ${this.state.rank}！`, 'positive');
                 this.state.lastRankUp = { from: prevRank, to: this.state.rank };
                 
@@ -1451,9 +1897,210 @@ class InfluencerGame {
         if (!this.state.lastRankUp) this.state.lastRankUp = null;
         if (!this.state.gender) this.state.gender = null;
         if (!this.state.avatarId) this.state.avatarId = null;
+        if (typeof this.state.edgeCount !== 'number') this.state.edgeCount = 0;
+        if (typeof this.state.edgeEscalationLevel !== 'number') this.state.edgeEscalationLevel = 0;
         if (!this.state.attributes) {
             this.rollAttributes();
         }
+        if (!Array.isArray(this.state.messages)) this.state.messages = [];
+        if (typeof this.state.messageIdCounter !== 'number') this.state.messageIdCounter = 1;
+        if (!Array.isArray(this.state.deferredOnboarding)) this.state.deferredOnboarding = [];
+    }
+
+    // 添加消息到队列
+    addMessage(event, isUrgent = false) {
+        const message = {
+            id: this.state.messageIdCounter++,
+            event: event,
+            time: `${this.state.year}年${this.state.month}月`,
+            isRead: false,
+            isUrgent: isUrgent,
+            timestamp: Date.now()
+        };
+        this.state.messages.unshift(message);  // 新消息放在前面
+        return message.id;
+    }
+
+    // 获取未读消息数量
+    getUnreadMessageCount() {
+        return this.state.messages.filter(m => !m.isRead).length;
+    }
+
+    // 标记消息为已读
+    markMessageAsRead(messageId) {
+        const message = this.state.messages.find(m => m.id === messageId);
+        if (message) {
+            message.isRead = true;
+        }
+    }
+
+    // 删除消息
+    deleteMessage(messageId) {
+        const index = this.state.messages.findIndex(m => m.id === messageId);
+        if (index !== -1) {
+            this.state.messages.splice(index, 1);
+        }
+    }
+
+    // 获取所有消息
+    getMessages() {
+        return this.state.messages;
+    }
+
+    // 检查是否可以开设新平台账号
+    canOpenNewPlatform() {
+        const config = GameConfig.multiPlatformConfig;
+        const rankOrder = ["素人", "初级达人", "中级达人", "高级达人", "头部达人", "MCN签约"];
+        const currentRankIndex = rankOrder.indexOf(this.state.rank);
+        const minRankIndex = rankOrder.indexOf(config.unlockConditions.minRank);
+        
+        if (currentRankIndex < minRankIndex) {
+            return { 
+                canOpen: false, 
+                reason: `需要达到${config.unlockConditions.minRank}职级`
+            };
+        }
+        
+        if (this.state.fans < config.unlockConditions.minFans) {
+            return { 
+                canOpen: false, 
+                reason: `需要至少${config.unlockConditions.minFans.toLocaleString()}粉丝`
+            };
+        }
+        
+        if (this.state.savings < config.unlockConditions.minSavings) {
+            return { 
+                canOpen: false, 
+                reason: `需要至少¥${config.unlockConditions.minSavings.toLocaleString()}存款`
+            };
+        }
+        
+        if (this.state.subPlatforms.length >= config.maxPlatforms - 1) {
+            return { 
+                canOpen: false, 
+                reason: `最多同时运营${config.maxPlatforms}个平台`
+            };
+        }
+        
+        return { canOpen: true };
+    }
+
+    // 开设新平台账号
+    openNewPlatform(platformId) {
+        const check = this.canOpenNewPlatform();
+        if (!check.canOpen) {
+            return { success: false, message: check.reason };
+        }
+        
+        const platform = GameConfig.platforms[platformId];
+        if (!platform) {
+            return { success: false, message: '平台不存在' };
+        }
+        
+        // 检查是否已经在该平台开设账号
+        const mainPlatformId = this.state.platform?.id;
+        const existingPlatform = this.state.subPlatforms.find(p => p.platformId === platformId);
+        
+        if (mainPlatformId === platformId || existingPlatform) {
+            return { success: false, message: '已经在该平台开设了账号' };
+        }
+        
+        const config = GameConfig.multiPlatformConfig;
+        const cost = config.baseCost;
+        
+        if (this.state.savings < cost) {
+            return { success: false, message: `开设账号需要¥${cost.toLocaleString()}` };
+        }
+        
+        // 扣除成本
+        this.state.savings -= cost;
+        
+        // 创建副平台账号
+        const subPlatform = {
+            platformId: platformId,
+            platform: platform,
+            fans: 100,  // 初始粉丝
+            openedMonth: this.state.month,
+            openedYear: this.state.year
+        };
+        
+        this.state.subPlatforms.push(subPlatform);
+        this.addLog(`在${platform.name}开设了新账号！花费¥${cost.toLocaleString()}`, 'positive');
+        
+        return { 
+            success: true, 
+            platform: platform,
+            cost: cost
+        };
+    }
+
+    // 计算副平台账号月度收益和成本
+    calculateSubPlatformMonthly() {
+        const config = GameConfig.multiPlatformConfig;
+        let totalIncome = 0;
+        let totalCost = 0;
+        const results = [];
+        
+        this.state.subPlatforms.forEach(subPlatform => {
+            // 计算维护成本
+            const maintenanceCost = Math.max(
+                config.maintenanceMinCost,
+                Math.floor(subPlatform.fans * config.maintenanceCostPerFan)
+            );
+            
+            // 计算收益（基于主账号的基础收益和平台加成）
+            const baseIncome = Math.floor(
+                (this.state.contentQuality * 20 + this.state.personaFit * 15) *
+                config.incomeMultiplier
+            );
+            const platformIncome = Math.floor(
+                baseIncome * (subPlatform.platform.bonuses.profitRate || 1)
+            );
+            
+            // 计算粉丝增长
+            const baseFansGrowth = Math.floor(
+                (this.state.contentQuality + this.state.personaFit) * 
+                config.fansGrowthMultiplier
+            );
+            const fansGrowth = Math.floor(
+                baseFansGrowth * (subPlatform.platform.bonuses.fanGrowth || 1)
+            );
+            
+            subPlatform.fans += fansGrowth;
+            
+            totalIncome += platformIncome;
+            totalCost += maintenanceCost;
+            
+            results.push({
+                platform: subPlatform.platform.name,
+                icon: subPlatform.platform.icon,
+                income: platformIncome,
+                cost: maintenanceCost,
+                fansGrowth: fansGrowth,
+                totalFans: subPlatform.fans
+            });
+        });
+        
+        return {
+            totalIncome,
+            totalCost,
+            netIncome: totalIncome - totalCost,
+            details: results
+        };
+    }
+
+    // 关闭副平台账号
+    closeSubPlatform(platformId) {
+        const index = this.state.subPlatforms.findIndex(p => p.platformId === platformId);
+        if (index === -1) {
+            return { success: false, message: '未找到该平台账号' };
+        }
+        
+        const subPlatform = this.state.subPlatforms[index];
+        this.state.subPlatforms.splice(index, 1);
+        this.addLog(`关闭了${subPlatform.platform.name}的账号`, 'normal');
+        
+        return { success: true, platform: subPlatform.platform };
     }
 }
 

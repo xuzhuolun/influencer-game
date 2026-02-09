@@ -64,6 +64,17 @@
             </div>
         </div>
 
+        <!-- 平台选择界面 -->
+        <div id="platform-screen" class="screen">
+            <div class="content-box">
+                <h1 class="title">选择起步平台</h1>
+                <p class="subtitle">不同平台有不同的特点和机会，选择后可在游戏中切换</p>
+                <div id="platform-list" class="platform-list">
+                    <!-- 动态生成平台卡片 -->
+                </div>
+            </div>
+        </div>
+
         <!-- 主游戏界面 -->
         <div id="main-game-screen" class="screen">
             <!-- 顶部状态栏 -->
@@ -71,6 +82,7 @@
                 <div class="status-left">
                     <div id="avatar-display" class="avatar-display" aria-label="avatar"></div>
                     <span class="influencer-name-display" id="name-display">未命名</span>
+                    <span class="platform-tag" id="platform-display">未选择平台</span>
                     <span class="category-tag" id="category-display">未分类</span>
                     <span class="rank-tag" id="rank-display">素人</span>
                 </div>
@@ -136,6 +148,27 @@
             <div class="action-panel">
                 <h3>本月行动</h3>
                 <p class="tip" id="action-limit-tip">本月行动次数：0/5</p>
+                
+                <!-- 助理消息按钮 -->
+                <button class="btn btn-assistant" id="message-btn">
+                    <div class="assistant-icon">📱</div>
+                    <div class="assistant-content">
+                        <div class="assistant-title">小助理消息</div>
+                        <div class="assistant-subtitle">查看商业邀约和合作</div>
+                    </div>
+                    <span class="message-badge-large" id="message-badge" style="display: none;">0</span>
+                </button>
+
+                <!-- 平台管理按钮 -->
+                <button class="btn btn-platform-manage" id="platform-manage-btn">
+                    <div class="platform-manage-icon" id="platform-manage-icon">🎵</div>
+                    <div class="platform-manage-content">
+                        <div class="platform-manage-title" id="platform-manage-title">平台管理</div>
+                        <div class="platform-manage-subtitle" id="platform-manage-subtitle">切换平台 · 多开账号</div>
+                    </div>
+                    <div class="platform-manage-arrow">›</div>
+                </button>
+                
                 <div id="action-list" class="action-list">
                     <!-- 动态生成行动按钮 -->
                 </div>
@@ -181,6 +214,64 @@
                 <h2>月度总结</h2>
                 <div id="monthly-content"></div>
                 <button class="btn btn-primary" id="monthly-confirm-btn">确认</button>
+            </div>
+        </div>
+
+        <!-- 创角鼓励弹窗 -->
+        <div id="intro-modal" class="modal">
+            <div class="modal-content intro-modal-content">
+                <h2 class="intro-title">🎬 欢迎来到网红模拟经营</h2>
+                <div class="intro-body">
+                    <p class="intro-highlight">从素人到顶流，你的网红之路即将开启！</p>
+                    <div class="intro-path">
+                        <div class="intro-step">
+                            <div class="intro-step-icon">📱</div>
+                            <div class="intro-step-text">
+                                <strong>素人</strong> → 初级达人<br>
+                                <span>1000粉丝 + 内容质量30</span>
+                            </div>
+                        </div>
+                        <div class="intro-step">
+                            <div class="intro-step-icon">📈</div>
+                            <div class="intro-step-text">
+                                <strong>初级达人</strong> → 中级达人<br>
+                                <span>5000粉丝 + 内容质量50</span>
+                            </div>
+                        </div>
+                        <div class="intro-step">
+                            <div class="intro-step-icon">💼</div>
+                            <div class="intro-step-text">
+                                <strong>中级达人</strong> → 高级达人<br>
+                                <span>2万粉丝 + 内容质量70</span>
+                            </div>
+                        </div>
+                        <div class="intro-step">
+                            <div class="intro-step-icon">🌟</div>
+                            <div class="intro-step-text">
+                                <strong>高级达人</strong> → 头部达人<br>
+                                <span>10万粉丝 + 内容质量90</span>
+                            </div>
+                        </div>
+                        <div class="intro-step">
+                            <div class="intro-step-icon">👑</div>
+                            <div class="intro-step-text">
+                                <strong>头部达人</strong> → MCN签约<br>
+                                <span>50万粉丝 + 内容质量110 + 收益10万</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="intro-tips">
+                        <p><strong>💡 成长秘诀：</strong></p>
+                        <ul>
+                            <li>保持内容质量与人设契合，积累进度</li>
+                            <li>平衡收益与口碑，避免违规</li>
+                            <li>管理精力与存款，避免猝死或破产</li>
+                            <li>善用属性优势，把握商业机会</li>
+                        </ul>
+                    </div>
+                    <p class="intro-footer">准备好了吗？从素人逆袭成为顶流！</p>
+                </div>
+                <button class="btn btn-primary" id="intro-confirm-btn">开始起号</button>
             </div>
         </div>
 
@@ -318,6 +409,29 @@
                 <h2 id="rankup-title">职级晋升</h2>
                 <p id="rankup-desc"></p>
                 <button class="btn btn-primary" id="rankup-confirm-btn">知道了</button>
+            </div>
+        </div>
+
+        <!-- 事件结果反馈弹窗 -->
+        <div id="result-modal" class="modal">
+            <div class="modal-content result-modal-content">
+                <h2 class="result-title">📊 选择结果</h2>
+                <div id="result-content" class="result-content">
+                    <!-- 动态生成结果内容 -->
+                </div>
+                <button class="btn btn-primary" id="result-confirm-btn">确认</button>
+            </div>
+        </div>
+
+        <!-- 助理消息弹窗 -->
+        <div id="messages-modal" class="modal">
+            <div class="modal-content messages-modal-content">
+                <button class="modal-close" id="messages-close-btn" aria-label="关闭">×</button>
+                <h2 class="messages-title">📱 小助理来信</h2>
+                <div class="messages-subtitle">你的专属助理为你整理了这些重要消息</div>
+                <div id="messages-list" class="messages-list">
+                    <!-- 动态生成消息列表 -->
+                </div>
             </div>
         </div>
 

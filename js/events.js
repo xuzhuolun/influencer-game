@@ -20,29 +20,41 @@ const EventLibrary = {
                 ]
             },
             {
-                title: "学术机构合作邀请",
-                description: "知名大学邀请你参与科普项目，并提供资源支持！",
+                title: "学术机构科普合作",
+                description: "📱 助理消息：某985高校的科普中心邀请你参与他们的科普项目！他们会提供学术资源支持和专家团队配合，但需要你投入时间制作高质量内容。这是提升专业度的好机会。",
+                isMessage: true,
                 options: [
                     {
                         text: "全力投入合作",
-                        effects: { contentQuality: 15, personaFit: 10, profit: 2000, rankProgress: 15, savings: -800 },
+                        effects: { contentQuality: 15, personaFit: 10, profit: 2000, rankProgress: 15, savings: -800, energy: -20 },
                         type: 'positive'
                     },
                     {
                         text: "有选择地参与",
-                        effects: { contentQuality: 10, personaFit: 6, profit: 1000, rankProgress: 10, savings: -300 },
+                        effects: { contentQuality: 10, personaFit: 6, profit: 1000, rankProgress: 10, savings: -300, energy: -10 },
                         type: 'positive'
+                    },
+                    {
+                        text: "婉拒合作",
+                        effects: { mood: 5 },
+                        type: 'neutral'
                     }
                 ]
             },
             {
-                title: "科普奖项提名",
-                description: "你被提名为年度最佳科普博主，业内认可度大增！",
+                title: "科普奖项提名通知",
+                description: "📱 助理好消息：你被提名为本年度\u201C最具影响力科普创作者\u201D！主办方是权威科技媒体，获奖名单将在下月公布。是否需要准备获奖感言和宣传策略？",
+                isMessage: true,
                 options: [
                     {
-                        text: "积极宣传，扩大影响",
-                        effects: { fans: 1000, personaFit: 12, rankProgress: 15 },
+                        text: "积极准备，扩大影响",
+                        effects: { fans: 1000, personaFit: 12, rankProgress: 15, energy: -10 },
                         type: 'positive'
+                    },
+                    {
+                        text: "低调处理，平常心",
+                        effects: { personaFit: 8, mood: 10 },
+                        type: 'neutral'
                     }
                 ]
             }
@@ -255,7 +267,8 @@ const EventLibrary = {
         positive: [
             {
                 title: "探店视频爆火",
-                description: "你的美食探店视频获得百万播放，多家餐厅主动联系合作！",
+                description: "📱 助理汇报：你的最新美食探店视频获得百万播放！现在有超过20家餐厅主动联系助理想要合作推广。助理已经筛选了几家口碑不错的，等你决定。",
+                isMessage: true,
                 options: [
                     {
                         text: "精选优质餐厅合作",
@@ -264,30 +277,57 @@ const EventLibrary = {
                     },
                     {
                         text: "广泛合作，扩大影响",
-                        effects: { fans: 1200, profit: 3000, personaFit: 3, rankProgress: 8 },
+                        effects: { fans: 1200, profit: 3000, personaFit: 3, rankProgress: 8, energy: -15 },
                         type: 'positive'
+                    },
+                    {
+                        text: "只选最优质的1-2家",
+                        effects: { fans: 500, profit: 1200, personaFit: 12, contentQuality: 5 },
+                        type: 'mixed'
                     }
                 ]
             },
             {
                 title: "美食品牌代言",
-                description: "知名食品品牌邀请你做代言人，报酬丰厚！",
+                description: "📱 助理消息：某知名食品品牌看中了你在吃播领域的影响力，邀请你担任品牌代言人！报酬¥5,000，还会提供产品支持。助理已经初步了解过，品牌口碑不错。",
+                isMessage: true,
                 options: [
                     {
                         text: "接受代言",
                         effects: { profit: 5000, fans: 1000, personaFit: 10, rankProgress: 15 },
                         type: 'positive'
+                    },
+                    {
+                        text: "要求更高报酬",
+                        effects: { profit: 3000, mood: -5, energy: -10 },
+                        type: 'mixed'
+                    },
+                    {
+                        text: "婉拒代言",
+                        effects: { contentQuality: 5 },
+                        type: 'neutral'
                     }
                 ]
             },
             {
-                title: "美食纪录片邀请",
-                description: "电视台邀请你参与美食纪录片拍摄，提升专业度！",
+                title: "美食纪录片拍摄邀请",
+                description: "📱 助理来信：某卫视美食纪录片团队邀请你参与拍摄，作为特邀嘉宾出镜！这是提升专业度和主流媒体曝光的绝佳机会，但拍摄周期较长，需要投入大量时间精力。",
+                isMessage: true,
                 options: [
                     {
                         text: "参与拍摄",
                         effects: { fans: 1500, personaFit: 15, contentQuality: 10, rankProgress: 20, energy: -20, savings: -1200 },
                         type: 'positive'
+                    },
+                    {
+                        text: "协商缩短拍摄时间",
+                        effects: { fans: 1000, personaFit: 10, contentQuality: 6, energy: -12, savings: -600 },
+                        type: 'mixed'
+                    },
+                    {
+                        text: "婉拒邀请",
+                        effects: { energy: 5, mood: 5 },
+                        type: 'neutral'
                     }
                 ]
             }
@@ -510,24 +550,47 @@ const EventLibrary = {
                 ]
             },
             {
-                title: "品牌代言邀约",
-                description: "国际一线美妆品牌邀请你做亚太区代言人！",
+                title: "国际美妆品牌代言",
+                description: "📱 助理重磅消息：某国际一线美妆品牌邀请你担任亚太区代言人！这是顶级商业机会，报酬¥8,000，还包含全年产品赞助。但需要你配合拍摄广告大片和参加发布会。",
+                isMessage: true,
+                isUrgent: true,
                 options: [
                     {
                         text: "接受代言",
-                        effects: { profit: 8000, fans: 2000, personaFit: 15, rankProgress: 20 },
+                        effects: { profit: 8000, fans: 2000, personaFit: 15, rankProgress: 20, energy: -15 },
                         type: 'positive'
+                    },
+                    {
+                        text: "谈判更优条件",
+                        effects: { profit: 6000, fans: 1500, energy: -10, mood: -5 },
+                        type: 'mixed'
+                    },
+                    {
+                        text: "婉拒邀约",
+                        effects: { contentQuality: 8, mood: 5 },
+                        type: 'neutral'
                     }
                 ]
             },
             {
-                title: "时尚杂志专访",
-                description: "知名时尚杂志邀请你做封面人物并专访！",
+                title: "时尚杂志封面专访",
+                description: "📱 助理通知：某知名时尚杂志想邀请你做下一期的封面人物，并进行深度专访！这对提升个人品牌很有帮助，但需要配合拍摄和采访，费用由你自己承担。",
+                isMessage: true,
                 options: [
                     {
                         text: "接受专访",
-                        effects: { fans: 1500, personaFit: 12, contentQuality: 8, rankProgress: 15, savings: -800 },
+                        effects: { fans: 1500, personaFit: 12, contentQuality: 8, rankProgress: 15, savings: -800, energy: -15 },
                         type: 'positive'
+                    },
+                    {
+                        text: "谈判分摊费用",
+                        effects: { fans: 1200, personaFit: 10, savings: -400, energy: -10 },
+                        type: 'mixed'
+                    },
+                    {
+                        text: "婉拒邀约",
+                        effects: { mood: 5 },
+                        type: 'neutral'
                     }
                 ]
             }
@@ -746,12 +809,23 @@ const EventLibrary = {
             },
             {
                 title: "品牌生活方式合作",
-                description: "知名生活品牌邀请你做生活方式大使！",
+                description: "📱 助理消息：某知名生活品牌邀请你担任\u201C生活方式大使\u201D！他们看中你的生活美学和粉丝群体，愿意提供¥5,000报酬和全年产品支持。需要配合拍摄广告和参加活动。",
+                isMessage: true,
                 options: [
                     {
                         text: "接受合作",
-                        effects: { profit: 5000, fans: 1200, personaFit: 10, rankProgress: 15, savings: -600 },
+                        effects: { profit: 5000, fans: 1200, personaFit: 10, rankProgress: 15, savings: -600, energy: -15 },
                         type: 'positive'
+                    },
+                    {
+                        text: "谈判更优条件",
+                        effects: { profit: 3500, fans: 800, personaFit: 8, energy: -10 },
+                        type: 'mixed'
+                    },
+                    {
+                        text: "婉拒合作",
+                        effects: { contentQuality: 5, personaFit: 8 },
+                        type: 'neutral'
                     }
                 ]
             },
@@ -977,6 +1051,7 @@ const EdgeActionEvents = [
     {
         title: "擦边试探：轻度",
         description: "选择相对保守的擦边方式，获取部分流量，但仍有口碑损耗。",
+        isEdge: true,
         options: [
             {
                 text: "轻度擦边尝试",
@@ -993,6 +1068,7 @@ const EdgeActionEvents = [
     {
         title: "擦边试探：话术",
         description: "选择更具暗示性的表达方式，涨粉更快但人设受损明显。",
+        isEdge: true,
         options: [
             {
                 text: "暧昧话术试探",
@@ -1009,6 +1085,7 @@ const EdgeActionEvents = [
     {
         title: "擦边试探：造型",
         description: "利用造型或镜头语言吸引注意力，收益更高但口碑风险更大。",
+        isEdge: true,
         options: [
             {
                 text: "小幅造型优化",
@@ -1018,6 +1095,95 @@ const EdgeActionEvents = [
             {
                 text: "重度造型突破",
                 effects: { edgeFans: 2300, edgeProfit: 1200, personaFit: -18, contentQuality: -12, mood: -10, energy: -20 },
+                type: 'risky'
+            }
+        ]
+    }
+];
+
+// 擦边次数触发的专属事件（按严重度 0~3，职级/粉丝越高严重度越高）
+const EdgeEscalationEvents = [
+    // severity 0：轻度 - 小号/低职级首次触发
+    {
+        id: "edge-escalation-0",
+        severity: 0,
+        title: "擦边升级：平台提醒",
+        description: "平台检测到你的内容有擦边倾向，系统发来提醒：继续这样可能会降低推荐权重。新人阶段还有调整空间，是否收敛风格？",
+        isEdge: true,
+        options: [
+            {
+                text: "收敛风格，提升内容质量",
+                effects: { contentQuality: 8, personaFit: 6, fans: -80 },
+                type: 'mixed'
+            },
+            {
+                text: "继续试探，维持热度",
+                effects: { edgeFans: 1000, edgeProfit: 400, personaFit: -5, contentQuality: -4, mood: -2 },
+                type: 'risky'
+            }
+        ]
+    },
+    // severity 1：中度 - 有一定粉丝或职级后的舆论/品牌担忧
+    {
+        id: "edge-escalation-1",
+        severity: 1,
+        title: "擦边升级：舆论与品牌担忧",
+        description: "近期擦边内容引发争议，部分粉丝质疑你的风格转变，已有品牌方私下表示「形象风险」考虑暂停合作。职级和粉丝量上来了，一举一动都被放大。",
+        isEdge: true,
+        options: [
+            {
+                text: "公开道歉，回归内容本质",
+                effects: { personaFit: 10, contentQuality: 8, fans: -400, mood: -5 },
+                type: 'mixed'
+            },
+            {
+                text: "保持风格，加码互动",
+                effects: { edgeFans: 1800, edgeProfit: 800, personaFit: -12, contentQuality: -10, mood: -8 },
+                type: 'risky'
+            },
+            {
+                text: "冷处理，减少擦边频次",
+                effects: { fans: -250, contentQuality: 5, mood: 3 },
+                type: 'mixed'
+            }
+        ]
+    },
+    // severity 2：重度 - 高职级/高粉丝：限流与解约
+    {
+        id: "edge-escalation-2",
+        severity: 2,
+        title: "擦边升级：限流警告与合作解约",
+        description: "平台正式发来限流警告，部分商务合作方以「形象不符」为由解约。你已是具备影响力的账号，平台和品牌对擦边零容忍，一步错可能前功尽弃。",
+        isEdge: true,
+        options: [
+            {
+                text: "全面整改，承诺内容升级",
+                effects: { contentQuality: 12, personaFit: 12, fans: -800, mood: -8, savings: -2000 },
+                type: 'mixed'
+            },
+            {
+                text: "硬刚规则，继续擦边",
+                effects: { edgeFans: 2200, edgeProfit: 1100, personaFit: -18, contentQuality: -15, mood: -10 },
+                type: 'risky'
+            }
+        ]
+    },
+    // severity 3：危机 - 大V/顶流：封禁与法律风险
+    {
+        id: "edge-escalation-3",
+        severity: 3,
+        title: "擦边升级：封禁风险与法律红线",
+        description: "平台已对你账号进行「重点监控」，多次警告称再犯将限流甚至封号；同时有律师函提醒「低俗内容」可能触及法规。作为头部账号，责任与风险成倍放大。",
+        isEdge: true,
+        options: [
+            {
+                text: "立刻整改，接受平台约谈",
+                effects: { contentQuality: 15, personaFit: 15, fans: -1500, mood: -12, savings: -5000 },
+                type: 'mixed'
+            },
+            {
+                text: "继续冒险，赌一把",
+                effects: { edgeFans: 3000, edgeProfit: 1500, personaFit: -25, contentQuality: -20, mood: -15 },
                 type: 'risky'
             }
         ]

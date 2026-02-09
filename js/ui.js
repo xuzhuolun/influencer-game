@@ -2,6 +2,7 @@
 class UIController {
     constructor() {
         this.currentScreen = 'naming-screen';
+        this.currentMessageId = null;
         this.init();
     }
 
@@ -37,6 +38,11 @@ class UIController {
         bind('help-close-btn', 'click', () => this.closeHelp());
         bind('rankup-close-btn', 'click', () => this.closeRankUpModal());
         bind('rankup-confirm-btn', 'click', () => this.closeRankUpModal());
+        bind('intro-confirm-btn', 'click', () => this.closeIntroModal());
+        bind('result-confirm-btn', 'click', () => this.closeResultModal());
+        bind('message-btn', 'click', () => this.showMessages());
+        bind('messages-close-btn', 'click', () => this.closeMessages());
+        bind('platform-manage-btn', 'click', () => this.showPlatformManageMenu());
         document.querySelectorAll('.help-tab').forEach(tab => {
             tab.addEventListener('click', () => this.switchHelpTab(tab.dataset.tab));
         });
@@ -46,6 +52,9 @@ class UIController {
         this.setDefaultName();
         this.renderAttributeList();
         this.renderAvatarList();
+        
+        // 显示创角鼓励弹窗
+        this.showIntroModal();
     }
 
     // 切换屏幕
@@ -295,24 +304,101 @@ class UIController {
         console.log('选择类别:', categoryId);
         if (game.selectCategory(categoryId)) {
             console.log('类别选择成功，当前状态:', game.getState());
-            this.showMainGame();
+            this.showPlatformScreen();
         } else {
             console.error('类别选择失败');
             alert('类别选择失败，请重试');
         }
     }
 
+    // 显示平台选择界面
+    showPlatformScreen() {
+        this.switchScreen('platform-screen');
+        this.renderPlatforms();
+    }
+
+    // 渲染平台列表
+    renderPlatforms() {
+        const container = document.getElementById('platform-list');
+        container.innerHTML = '';
+        
+        const platforms = Object.values(GameConfig.platforms);
+        const categoryId = game.state.category?.id;
+        
+        platforms.forEach(platform => {
+            const card = document.createElement('div');
+            card.className = 'platform-card';
+            
+            // 判断是否适合当前类别
+            const suitable = !categoryId || platform.suitableCategories.includes(categoryId);
+            
+            card.innerHTML = `
+                <div class="platform-header">
+                    <div class="platform-icon">${platform.icon}</div>
+                    <div class="platform-info">
+                        <div class="platform-name">${platform.name}</div>
+                        <div class="platform-desc">${platform.description}</div>
+                    </div>
+                </div>
+                <ul class="platform-features">
+                    ${platform.features.map(f => `<li>${f}</li>`).join('')}
+                </ul>
+                <div class="platform-switch-cost">💸 转换平台粉丝损失：${(platform.switchCost * 100).toFixed(0)}%</div>
+            `;
+            
+            if (!suitable) {
+                card.style.opacity = '0.6';
+            }
+            
+            card.addEventListener('click', () => this.selectPlatform(platform.id));
+            container.appendChild(card);
+        });
+    }
+
+    // 选择平台
+    selectPlatform(platformId) {
+        console.log('选择平台:', platformId);
+        if (game.selectPlatform(platformId)) {
+            console.log('平台选择成功，当前状态:', game.getState());
+            this.showMainGame(true);  // 标记为首次进入
+        } else {
+            console.error('平台选择失败');
+            alert('平台选择失败，请重试');
+        }
+    }
+
     // 显示主游戏界面
-    showMainGame() {
+    showMainGame(isFirstEntry = false) {
         this.switchScreen('main-game-screen');
         this.updateUI();
         this.renderActions();
         this.updateLog();
+        this.updateMessageBadge();
         
-        // 月初有60%概率触发事件
-        if (Math.random() < 0.6) {
-            setTimeout(() => this.triggerEvent(), 1000);
+        if (isFirstEntry) {
+            // 首次进入：显示平台引导消息提醒，延迟弹出助理消息
+            setTimeout(() => {
+                const unreadCount = game.getUnreadMessageCount();
+                if (unreadCount > 0) {
+                    this.showOnboardingHint();
+                }
+            }, 800);
+        } else {
+            // 月初有60%概率触发事件
+            if (Math.random() < 0.6) {
+                setTimeout(() => this.triggerEvent(), 1000);
+            }
         }
+    }
+
+    // 显示入驻引导提醒
+    showOnboardingHint() {
+        const state = game.getState();
+        const platformName = state.platform?.name || '平台';
+        const platformIcon = state.platform?.icon || '📱';
+        
+        // 直接打开助理消息列表
+        this.showMessages();
     }
 
     // 更新UI
@@ -321,6 +407,33 @@ class UIController {
         
         // 更新顶部信息
         document.getElementById('name-display').textContent = state.influencerName;
+        const platformDisplay = document.getElementById('platform-display');
+        if (state.platform) {
+            const subCount = state.subPlatforms?.length || 0;
+            const platformText = subCount > 0 
+                ? `${state.platform.icon} ${state.platform.name} +${subCount}`
+                : `${state.platform.icon} ${state.platform.name}`;
+            platformDisplay.textContent = platformText;
+            platformDisplay.title = subCount > 0 
+                ? `主平台：${state.platform.name}\n副平台：${state.subPlatforms.map(p => p.platform.name).join('、')}`
+                : '';
+        } else {
+            platformDisplay.textContent = '未选择平台';
+        }
+        
+        // 更新平台管理按钮
+        const platformManageIcon = document.getElementById('platform-manage-icon');
+        const platformManageTitle = document.getElementById('platform-manage-title');
+        const platformManageSubtitle = document.getElementById('platform-manage-subtitle');
+        if (state.platform && platformManageIcon) {
+            platformManageIcon.textContent = state.platform.icon;
+            platformManageTitle.textContent = `${state.platform.name} · 平台管理`;
+            const subCount = state.subPlatforms?.length || 0;
+            platformManageSubtitle.textContent = subCount > 0 
+                ? `切换平台 · 多开账号 · 副平台×${subCount}` 
+                : '切换平台 · 多开账号';
+        }
+        
         document.getElementById('category-display').textContent = state.category ? state.category.name : '未分类';
         document.getElementById('rank-display').textContent = state.rank;
         document.getElementById('month-display').textContent = `${state.year}年${state.month}月`;
@@ -410,10 +523,25 @@ class UIController {
         actions.forEach(action => {
             const btn = document.createElement('button');
             btn.className = 'action-btn';
-            const energyText = action.energyCost < 0
-                ? `+${Math.abs(action.energyCost)}`
-                : `-${action.energyCost}`;
-            btn.textContent = `${action.name} (${energyText}精力)`;
+            
+            // 计算能量显示文本
+            let energyText;
+            if (action.energyCost > 0) {
+                // 消耗精力
+                energyText = `-${action.energyCost}精力`;
+            } else if (action.energyCost < 0) {
+                // 恢复精力（通过负消耗）
+                energyText = `+${Math.abs(action.energyCost)}精力`;
+            } else if (action.energyCost === 0 && action.effects && action.effects.energy) {
+                // energyCost为0但effects中有能量恢复
+                const energyGain = action.effects.energy;
+                energyText = energyGain > 0 ? `+${energyGain}精力` : `${energyGain}精力`;
+            } else {
+                // 不涉及精力消耗或恢复
+                energyText = `${action.description || ''}`;
+            }
+            
+            btn.textContent = `${action.name} (${energyText})`;
             
             if (!game.canTakeAction() || (action.energyCost > 0 && state.energy < action.energyCost)) {
                 btn.disabled = true;
@@ -476,18 +604,32 @@ class UIController {
         const event = game.getEventForCurrentMonth();
         console.log('事件内容:', event);
         if (event) {
-            this.showEventModal(event);
+            // 检查事件是否应该作为助理消息
+            if (event.isMessage) {
+                game.addMessage(event, event.isUrgent);
+                this.updateMessageBadge();
+                game.addLog(`📱 收到助理消息：${event.title}`, 'normal');
+                this.updateLog();
+            } else {
+                this.showEventModal(event);
+            }
         } else {
             console.error('事件生成失败');
         }
     }
 
-    // 显示事件弹窗
-    showEventModal(event) {
+    // 显示事件弹窗（messageId 不为空时表示来自小助理消息，选择后将删除该消息）
+    showEventModal(event, messageId = null) {
+        this.currentMessageId = messageId != null ? messageId : null;
         const modal = document.getElementById('event-modal');
         document.getElementById('event-title').textContent = event.title;
         const desc = document.getElementById('event-description');
-        desc.textContent = event.description;
+        // 引导类消息支持换行显示
+        if (event.isOnboarding || event.description.includes('\n')) {
+            desc.innerHTML = event.description.replace(/\n/g, '<br>');
+        } else {
+            desc.textContent = event.description;
+        }
         const oldBanner = modal.querySelector('.risk-banner');
         if (oldBanner) oldBanner.remove();
         if (event.title.includes('擦边')) {
@@ -552,19 +694,51 @@ class UIController {
 
     // 处理事件选项
     handleEventOption(event, optionIndex) {
+        const option = event.options[optionIndex];
+        const beforeState = {
+            energy: game.state.energy,
+            mood: game.state.mood,
+            contentQuality: game.state.contentQuality,
+            personaFit: game.state.personaFit,
+            fans: game.state.fans,
+            savings: game.state.savings,
+            violationIndex: game.state.violationIndex
+        };
+        
         game.handleEventOption(event, optionIndex);
+        if (this.currentMessageId != null) {
+            game.deleteMessage(this.currentMessageId);
+            this.currentMessageId = null;
+            this.updateMessageBadge();
+        }
         this.closeEventModal();
+        
+        const afterState = {
+            energy: game.state.energy,
+            mood: game.state.mood,
+            contentQuality: game.state.contentQuality,
+            personaFit: game.state.personaFit,
+            fans: game.state.fans,
+            savings: game.state.savings,
+            violationIndex: game.state.violationIndex
+        };
+        
+        // 显示结果反馈
+        this.showResultModal(event, option, beforeState, afterState);
+        
         this.updateUI();
         this.updateLog();
+        this.updateMessageBadge();
         
         // 检查游戏是否结束
         if (game.state.isGameOver) {
-            this.showGameOver();
+            setTimeout(() => this.showGameOver(), 500);
         }
     }
 
-    // 关闭事件弹窗
+    // 关闭事件弹窗（未选选项时清除消息关联，避免误删）
     closeEventModal() {
+        this.currentMessageId = null;
         document.getElementById('event-modal').classList.remove('active');
     }
 
@@ -578,7 +752,7 @@ class UIController {
         this.updateLog();
         
         if (!game.state.isGameOver) {
-            this.showMonthlyModal();
+            this.showMonthlyModal(result.monthlyChange);
             this.showRankUpModalIfNeeded();
         } else {
             setTimeout(() => {
@@ -603,21 +777,37 @@ class UIController {
         document.getElementById('rankup-modal').classList.remove('active');
     }
 
-    // 显示月度总结弹窗（仅粉丝与存款）
-    showMonthlyModal() {
+    // 显示月度总结弹窗（含对比数据，使用结算返回的 monthlyChange 避免被覆盖后显示无变化）
+    showMonthlyModal(monthlyChange) {
         const modal = document.getElementById('monthly-modal');
         const content = document.getElementById('monthly-content');
         const state = game.getState();
+        
+        const fansChange = monthlyChange && typeof monthlyChange.fans === 'number' ? monthlyChange.fans : (state.fans - (state.lastMonthStats?.fans ?? 0));
+        const savingsChange = monthlyChange && typeof monthlyChange.savings === 'number' ? monthlyChange.savings : (state.savings - (state.lastMonthStats?.savings ?? state.savings));
+        
+        // 格式化变化数值
+        const formatChange = (value, prefix = '') => {
+            if (value > 0) {
+                return `<span style="color: #10b981;">▲ ${prefix}${Math.abs(value).toLocaleString()}</span>`;
+            } else if (value < 0) {
+                return `<span style="color: #ef4444;">▼ ${prefix}${Math.abs(value).toLocaleString()}</span>`;
+            } else {
+                return `<span style="color: #999;">— 无变化</span>`;
+            }
+        };
 
         content.innerHTML = `
             <div class="monthly-summary">
                 <div class="monthly-card">
-                    <div>本月粉丝</div>
+                    <div class="monthly-card-label">本月粉丝</div>
                     <div class="value">${state.fans.toLocaleString()}</div>
+                    <div class="monthly-change">${formatChange(fansChange)}</div>
                 </div>
                 <div class="monthly-card">
-                    <div>当前存款</div>
+                    <div class="monthly-card-label">当前存款</div>
                     <div class="value">¥${state.savings.toLocaleString()}</div>
+                    <div class="monthly-change">${formatChange(savingsChange, '¥')}</div>
                 </div>
             </div>
         `;
@@ -628,6 +818,8 @@ class UIController {
     // 关闭月度总结弹窗
     closeMonthlyModal() {
         document.getElementById('monthly-modal').classList.remove('active');
+        // 更新消息红点（可能有新的引导消息）
+        this.updateMessageBadge();
         if (!game.state.isGameOver && Math.random() < 0.6) {
             setTimeout(() => this.triggerEvent(), 300);
         }
@@ -640,12 +832,17 @@ class UIController {
         
         const isVictory = state.rank === 'MCN签约' && state.isGameOver;
         const isSuddenDeath = state.gameOverReason && state.gameOverReason.includes('猝死');
+        const isMoodCollapse = state.gameOverReason && state.gameOverReason.includes('心态炸了');
         
         document.getElementById('gameover-title').textContent = isVictory ? '🎉 游戏胜利！' : '游戏结束';
         if (isSuddenDeath) {
             document.getElementById('gameover-title').textContent = '⚠️ 猝死事件';
             document.getElementById('gameover-reason').textContent =
                 '高强度透支导致精力归零，猝死事件触发。健康与节奏同样重要。';
+        } else if (isMoodCollapse) {
+            document.getElementById('gameover-title').textContent = '💥 心态炸了';
+            document.getElementById('gameover-reason').textContent =
+                '心态值归零，心态炸了。压力与负面事件累积导致无法继续，退出网红圈。';
         } else {
             document.getElementById('gameover-reason').textContent = state.gameOverReason;
         }
@@ -735,6 +932,425 @@ class UIController {
         document.getElementById('help-modal').classList.remove('active');
     }
 
+    showIntroModal() {
+        document.getElementById('intro-modal').classList.add('active');
+    }
+
+    closeIntroModal() {
+        document.getElementById('intro-modal').classList.remove('active');
+    }
+
+    // 显示事件结果反馈弹窗
+    showResultModal(event, option, beforeState, afterState) {
+        const modal = document.getElementById('result-modal');
+        const content = document.getElementById('result-content');
+        
+        const changes = [];
+        const stateKeys = {
+            energy: '精力',
+            mood: '心态',
+            contentQuality: '内容质量',
+            personaFit: '人设契合',
+            fans: '粉丝数',
+            savings: '存款',
+            violationIndex: '违规指数'
+        };
+        
+        for (const [key, label] of Object.entries(stateKeys)) {
+            const before = beforeState[key];
+            const after = afterState[key];
+            const diff = after - before;
+            
+            if (diff !== 0) {
+                let type = 'neutral';
+                if (key === 'violationIndex') {
+                    type = diff > 0 ? 'negative' : 'positive';
+                } else {
+                    type = diff > 0 ? 'positive' : 'negative';
+                }
+                
+                let valueText;
+                if (key === 'savings') {
+                    valueText = `${diff > 0 ? '+' : '-'}¥${Math.abs(diff).toLocaleString()}`;
+                } else if (key === 'fans') {
+                    valueText = `${diff > 0 ? '+' : '-'}${Math.abs(diff).toLocaleString()}`;
+                } else {
+                    valueText = `${diff > 0 ? '+' : ''}${diff}`;
+                }
+                
+                changes.push({ label, value: valueText, type });
+            }
+        }
+        
+        let html = '';
+        if (changes.length > 0) {
+            changes.forEach(change => {
+                html += `
+                    <div class="result-item ${change.type}">
+                        <span class="result-label">${change.label}</span>
+                        <span class="result-value ${change.type}">${change.value}</span>
+                    </div>
+                `;
+            });
+        } else {
+            html = '<div class="result-item neutral"><span class="result-label">无变化</span></div>';
+        }
+        
+        html += `<div class="result-summary">${option.text}</div>`;
+        
+        content.innerHTML = html;
+        modal.classList.add('active');
+    }
+
+    closeResultModal() {
+        document.getElementById('result-modal').classList.remove('active');
+    }
+
+    // 显示助理消息列表
+    showMessages() {
+        const modal = document.getElementById('messages-modal');
+        const list = document.getElementById('messages-list');
+        const messages = game.getMessages();
+        
+        if (messages.length === 0) {
+            list.innerHTML = `
+                <div class="messages-empty">
+                    <div class="messages-empty-icon">📭</div>
+                    <div class="messages-empty-text">暂无消息</div>
+                </div>
+            `;
+        } else {
+            list.innerHTML = '';
+            messages.forEach(message => {
+                const item = document.createElement('div');
+                const isOnboarding = message.event.isOnboarding;
+                item.className = `message-item ${message.isRead ? '' : 'unread'} ${isOnboarding ? 'onboarding' : ''} ${message.isUrgent ? 'urgent' : ''}`;
+                
+                const unreadBadge = message.isRead ? '' : '<span class="message-badge-new">NEW</span>';
+                const tagHtml = isOnboarding 
+                    ? '<span class="message-tag onboarding-tag">平台引导</span>' 
+                    : (message.isUrgent ? '<span class="message-tag urgent-tag">紧急</span>' : '');
+                
+                item.innerHTML = `
+                    <div class="message-header">
+                        <div class="message-title">
+                            ${tagHtml}
+                            ${message.event.title}
+                            ${unreadBadge}
+                        </div>
+                        <div class="message-time">${message.time}</div>
+                    </div>
+                    <div class="message-preview">${message.event.description.substring(0, 80)}...</div>
+                    <div class="message-action">
+                        <button class="message-btn" data-message-id="${message.id}">${isOnboarding ? '查看引导' : '查看详情'}</button>
+                    </div>
+                `;
+                
+                const btn = item.querySelector('.message-btn');
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.openMessage(message.id);
+                });
+                
+                list.appendChild(item);
+            });
+        }
+        
+        modal.classList.add('active');
+    }
+
+    closeMessages() {
+        document.getElementById('messages-modal').classList.remove('active');
+    }
+
+    // 打开消息详情
+    openMessage(messageId) {
+        const message = game.getMessages().find(m => m.id === messageId);
+        if (!message) return;
+        
+        game.markMessageAsRead(messageId);
+        this.closeMessages();
+        this.showEventModal(message.event, message.id);
+        this.updateMessageBadge();
+    }
+
+    // 更新消息红点
+    updateMessageBadge() {
+        const badge = document.getElementById('message-badge');
+        const count = game.getUnreadMessageCount();
+        
+        if (count > 0) {
+            badge.textContent = count;
+            badge.style.display = 'block';
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+
+    // 显示平台管理菜单
+    showPlatformManageMenu() {
+        const state = game.getState();
+        const currentPlatform = state.platform;
+        if (!currentPlatform) {
+            alert('当前没有选择平台');
+            return;
+        }
+        
+        const modal = document.getElementById('event-modal');
+        document.getElementById('event-title').textContent = `${currentPlatform.icon} 平台管理`;
+        
+        const subCount = state.subPlatforms?.length || 0;
+        let descText = `当前主平台：${currentPlatform.icon} ${currentPlatform.name}`;
+        if (subCount > 0) {
+            descText += `\n副平台(${subCount}个)：${state.subPlatforms.map(p => p.platform.icon + ' ' + p.platform.name).join('、')}`;
+        }
+        
+        const desc = document.getElementById('event-description');
+        desc.innerHTML = descText.replace(/\n/g, '<br>');
+        
+        const optionsContainer = document.getElementById('event-options');
+        optionsContainer.innerHTML = '';
+        
+        // 切换平台按钮
+        const switchBtn = document.createElement('button');
+        switchBtn.className = 'event-option-btn';
+        switchBtn.innerHTML = `<span class="option-text">🔄 切换平台</span><span class="option-cost">转移到其他平台发展（会损失部分粉丝）</span>`;
+        switchBtn.addEventListener('click', () => {
+            modal.classList.remove('active');
+            this.showPlatformSwitchModal();
+        });
+        optionsContainer.appendChild(switchBtn);
+        
+        // 多开平台按钮
+        const multiBtn = document.createElement('button');
+        multiBtn.className = 'event-option-btn';
+        const check = game.canOpenNewPlatform();
+        if (check.canOpen) {
+            multiBtn.innerHTML = `<span class="option-text">➕ 多开平台</span><span class="option-cost">在其他平台开设账号</span>`;
+        } else {
+            multiBtn.innerHTML = `<span class="option-text">➕ 多开平台</span><span class="option-cost">🔒 ${check.reason}</span>`;
+            multiBtn.style.opacity = '0.6';
+        }
+        multiBtn.addEventListener('click', () => {
+            modal.classList.remove('active');
+            this.showMultiPlatformModal();
+        });
+        optionsContainer.appendChild(multiBtn);
+        
+        // 副平台管理按钮（如果有副平台）
+        if (subCount > 0) {
+            const manageBtn = document.createElement('button');
+            manageBtn.className = 'event-option-btn';
+            manageBtn.innerHTML = `<span class="option-text">📋 副平台管理</span><span class="option-cost">查看和管理已开设的副平台账号</span>`;
+            manageBtn.addEventListener('click', () => {
+                modal.classList.remove('active');
+                this.showSubPlatformManagement();
+            });
+            optionsContainer.appendChild(manageBtn);
+        }
+        
+        // 取消按钮
+        const cancelBtn = document.createElement('button');
+        cancelBtn.className = 'event-option-btn';
+        cancelBtn.textContent = '返回';
+        cancelBtn.style.opacity = '0.7';
+        cancelBtn.addEventListener('click', () => {
+            modal.classList.remove('active');
+        });
+        optionsContainer.appendChild(cancelBtn);
+        
+        modal.classList.add('active');
+    }
+
+    // 显示平台切换弹窗
+    showPlatformSwitchModal() {
+        const modal = document.getElementById('event-modal');
+        const currentPlatform = game.state.platform;
+        
+        if (!currentPlatform) {
+            alert('当前没有选择平台');
+            return;
+        }
+        
+        document.getElementById('event-title').textContent = '切换平台';
+        document.getElementById('event-description').textContent = 
+            `当前平台：${currentPlatform.icon} ${currentPlatform.name}\n切换平台会损失部分粉丝，但可以获得新平台的特性加成。`;
+        
+        const optionsContainer = document.getElementById('event-options');
+        optionsContainer.innerHTML = '';
+        
+        const platforms = Object.values(GameConfig.platforms);
+        platforms.forEach(platform => {
+            if (platform.id === currentPlatform.id) return;
+            
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            
+            const fansLoss = Math.floor(game.state.fans * platform.switchCost);
+            btn.textContent = `切换到 ${platform.icon} ${platform.name}（损失${fansLoss.toLocaleString()}粉丝）`;
+            
+            btn.addEventListener('click', () => {
+                const result = game.switchPlatform(platform.id);
+                if (result.success) {
+                    this.closeEventModal();
+                    this.updateUI();
+                    this.updateLog();
+                    alert(`成功切换到${platform.name}！\n损失了${result.fansLost.toLocaleString()}粉丝`);
+                } else {
+                    alert(result.message);
+                }
+            });
+            
+            optionsContainer.appendChild(btn);
+        });
+        
+        // 添加取消按钮
+        const cancelBtn = document.createElement('button');
+        cancelBtn.className = 'option-btn';
+        cancelBtn.textContent = '取消切换';
+        cancelBtn.addEventListener('click', () => this.closeEventModal());
+        optionsContainer.appendChild(cancelBtn);
+        
+        modal.classList.add('active');
+    }
+
+    // 显示多开平台弹窗
+    showMultiPlatformModal() {
+        const check = game.canOpenNewPlatform();
+        
+        if (!check.canOpen) {
+            alert(`无法开设新平台账号：${check.reason}`);
+            return;
+        }
+        
+        const modal = document.getElementById('event-modal');
+        const config = GameConfig.multiPlatformConfig;
+        const currentPlatform = game.state.platform;
+        const subPlatforms = game.state.subPlatforms.map(p => p.platformId);
+        
+        document.getElementById('event-title').textContent = '🚀 多平台账号运营';
+        document.getElementById('event-description').textContent = 
+            `开设新平台账号需要¥${config.baseCost.toLocaleString()}\n` +
+            `每月维护成本：¥${config.maintenanceMinCost}起（随粉丝数增加）\n` +
+            `副账号会自动产生收益和涨粉，但效率较低\n\n` +
+            `当前运营：${game.state.subPlatforms.length + 1}/${config.maxPlatforms}个平台`;
+        
+        const optionsContainer = document.getElementById('event-options');
+        optionsContainer.innerHTML = '';
+        
+        const platforms = Object.values(GameConfig.platforms);
+        platforms.forEach(platform => {
+            // 跳过已经开设的平台
+            if (currentPlatform && platform.id === currentPlatform.id) return;
+            if (subPlatforms.includes(platform.id)) return;
+            
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            
+            btn.innerHTML = `
+                <div style="text-align: left;">
+                    <div><strong>${platform.icon} ${platform.name}</strong></div>
+                    <div style="font-size: 12px; color: #666; margin-top: 4px;">
+                        ${platform.description}<br>
+                        收益倍率：${(platform.bonuses.profitRate * 100).toFixed(0)}% | 
+                        涨粉倍率：${(platform.bonuses.fanGrowth * 100).toFixed(0)}%
+                    </div>
+                </div>
+            `;
+            
+            btn.addEventListener('click', () => {
+                const result = game.openNewPlatform(platform.id);
+                if (result.success) {
+                    this.closeEventModal();
+                    this.updateUI();
+                    this.updateLog();
+                    alert(`成功在${platform.name}开设账号！\n花费：¥${result.cost.toLocaleString()}`);
+                } else {
+                    alert(result.message);
+                }
+            });
+            
+            optionsContainer.appendChild(btn);
+        });
+        
+        // 添加查看副账号管理按钮
+        if (game.state.subPlatforms.length > 0) {
+            const manageBtn = document.createElement('button');
+            manageBtn.className = 'option-btn';
+            manageBtn.style.background = '#f8f9fa';
+            manageBtn.style.borderColor = '#ccc';
+            manageBtn.textContent = '📊 管理副平台账号';
+            manageBtn.addEventListener('click', () => {
+                this.closeEventModal();
+                this.showSubPlatformManagement();
+            });
+            optionsContainer.appendChild(manageBtn);
+        }
+        
+        // 添加取消按钮
+        const cancelBtn = document.createElement('button');
+        cancelBtn.className = 'option-btn';
+        cancelBtn.textContent = '取消';
+        cancelBtn.addEventListener('click', () => this.closeEventModal());
+        optionsContainer.appendChild(cancelBtn);
+        
+        modal.classList.add('active');
+    }
+
+    // 显示副平台账号管理
+    showSubPlatformManagement() {
+        const modal = document.getElementById('event-modal');
+        
+        document.getElementById('event-title').textContent = '📊 副平台账号管理';
+        
+        let desc = `管理你的副平台账号\n每月自动结算收益和成本\n\n`;
+        game.state.subPlatforms.forEach((sub, index) => {
+            const config = GameConfig.multiPlatformConfig;
+            const cost = Math.max(
+                config.maintenanceMinCost,
+                Math.floor(sub.fans * config.maintenanceCostPerFan)
+            );
+            desc += `${index + 1}. ${sub.platform.icon} ${sub.platform.name}：${sub.fans.toLocaleString()}粉丝，月维护¥${cost.toLocaleString()}\n`;
+        });
+        
+        document.getElementById('event-description').textContent = desc;
+        
+        const optionsContainer = document.getElementById('event-options');
+        optionsContainer.innerHTML = '';
+        
+        game.state.subPlatforms.forEach(sub => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.style.background = '#fff5f5';
+            btn.style.borderColor = '#ff4757';
+            btn.style.color = '#ff4757';
+            btn.textContent = `关闭 ${sub.platform.icon} ${sub.platform.name} 账号`;
+            
+            btn.addEventListener('click', () => {
+                if (confirm(`确定要关闭${sub.platform.name}的账号吗？\n将失去该平台的${sub.fans.toLocaleString()}粉丝`)) {
+                    const result = game.closeSubPlatform(sub.platformId);
+                    if (result.success) {
+                        this.closeEventModal();
+                        this.updateUI();
+                        this.updateLog();
+                        alert(`已关闭${result.platform.name}账号`);
+                    }
+                }
+            });
+            
+            optionsContainer.appendChild(btn);
+        });
+        
+        // 返回按钮
+        const backBtn = document.createElement('button');
+        backBtn.className = 'option-btn';
+        backBtn.textContent = '返回';
+        backBtn.addEventListener('click', () => this.closeEventModal());
+        optionsContainer.appendChild(backBtn);
+        
+        modal.classList.add('active');
+    }
+
     switchHelpTab(tabId) {
         document.querySelectorAll('.help-tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.help-panel').forEach(p => p.classList.remove('active'));
@@ -777,6 +1393,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const loadSave = confirm(`检测到存档（${saveTime.toLocaleString()}），是否加载？`);
             if (loadSave) {
                 ui.loadGame();
+                ui.closeIntroModal(); // 加载存档时关闭欢迎弹窗
             }
         }
     } catch (e) {
