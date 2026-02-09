@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>网红模拟经营游戏</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- 游戏主容器 -->
+    <div id="game-container">
+        
+        <!-- 起名界面 -->
+        <div id="naming-screen" class="screen active">
+            <div class="content-box">
+                <h1 class="title">网红模拟经营</h1>
+                <p class="subtitle">起号包装：昵称、性别、头像、属性一键到位</p>
+                <div class="setup-steps">
+                    <span class="step active">1 昵称</span>
+                    <span class="step">2 定位</span>
+                    <span class="step">3 头像</span>
+                    <span class="step">4 属性</span>
+                </div>
+                <div class="input-group">
+                    <input type="text" id="influencer-name" placeholder="请输入账号昵称（2-10个字符）" maxlength="10">
+                    <p class="tip" id="name-tip">名字不能包含违规词汇</p>
+                </div>
+                <div class="name-actions">
+                    <button class="btn btn-secondary btn-inline" id="random-name-btn">随机花名</button>
+                </div>
+                <div class="gender-panel">
+                    <div class="gender-header">账号定位</div>
+                    <div id="gender-list" class="gender-list">
+                        <label class="gender-item"><input type="radio" name="gender" value="male"> 男</label>
+                        <label class="gender-item"><input type="radio" name="gender" value="female"> 女</label>
+                    </div>
+                    <p class="tip" id="gender-tip">请选择性别</p>
+                </div>
+                <div class="avatar-panel">
+                    <div class="avatar-header">头像风格</div>
+                    <div id="avatar-list" class="avatar-list"></div>
+                    <p class="tip" id="avatar-tip">请选择头像</p>
+                </div>
+                <div class="attribute-panel">
+                    <div class="attribute-header">账号属性</div>
+                    <div id="attribute-list" class="attribute-list">
+                        <!-- 动态生成属性 -->
+                    </div>
+                    <button class="btn btn-secondary" id="roll-attr-btn">随机生成属性</button>
+                    <p class="tip" id="attr-tip">一键生成账号初始特质</p>
+                </div>
+                <button class="btn btn-primary" id="confirm-name-btn">起号</button>
+            </div>
+        </div>
+
+        <!-- 类别选择界面 -->
+        <div id="category-screen" class="screen">
+            <div class="content-box">
+                <h1 class="title">选择你的发展方向</h1>
+                <p class="subtitle">选择一个适合你的网红类别</p>
+                <div id="category-list" class="category-list">
+                    <!-- 动态生成类别卡片 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 主游戏界面 -->
+        <div id="main-game-screen" class="screen">
+            <!-- 顶部状态栏 -->
+            <div class="status-bar">
+                <div class="status-left">
+                    <div id="avatar-display" class="avatar-display" aria-label="avatar"></div>
+                    <span class="influencer-name-display" id="name-display">未命名</span>
+                    <span class="category-tag" id="category-display">未分类</span>
+                    <span class="rank-tag" id="rank-display">素人</span>
+                </div>
+                <div class="status-right">
+                    <span id="month-display">第1月</span>
+                    <button class="btn btn-small" id="save-btn">保存</button>
+                    <button class="btn btn-small" id="menu-btn">菜单</button>
+                    <button class="btn btn-small" id="help-btn">说明</button>
+                </div>
+            </div>
+
+            <!-- 数值面板 -->
+            <div class="stats-panel">
+                <div class="stat-item">
+                    <span class="stat-label">精力</span>
+                    <div class="stat-bar">
+                        <div class="stat-fill" id="energy-bar" style="width: 80%"></div>
+                    </div>
+                    <span class="stat-value" id="energy-value">80/100</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">心态</span>
+                    <div class="stat-bar">
+                        <div class="stat-fill" id="mood-bar" style="width: 80%"></div>
+                    </div>
+                    <span class="stat-value" id="mood-value">80/100</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">内容质量</span>
+                    <div class="stat-bar">
+                        <div class="stat-fill stat-fill-blue" id="quality-bar" style="width: 20%"></div>
+                    </div>
+                    <span class="stat-value" id="quality-value">20/100</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">人设契合</span>
+                    <div class="stat-bar">
+                        <div class="stat-fill stat-fill-blue" id="persona-bar" style="width: 20%"></div>
+                    </div>
+                    <span class="stat-value" id="persona-value">20/100</span>
+                </div>
+                <div class="stat-row">
+                    <div class="stat-box">
+                        <span class="stat-label">粉丝数</span>
+                        <span class="stat-number" id="fans-value">0</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">存款</span>
+                        <span class="stat-number" id="savings-value">¥0</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">违规指数</span>
+                        <span class="stat-number" id="violation-value">0</span>
+                    </div>
+                </div>
+                <div class="attribute-display">
+                    <span class="stat-label">角色属性</span>
+                    <div id="attribute-display" class="attribute-display-list"></div>
+                </div>
+            </div>
+
+            <!-- 行动选择区 -->
+            <div class="action-panel">
+                <h3>本月行动</h3>
+                <p class="tip" id="action-limit-tip">本月行动次数：0/5</p>
+                <div id="action-list" class="action-list">
+                    <!-- 动态生成行动按钮 -->
+                </div>
+                <button class="btn btn-primary btn-wide" id="next-month-btn">结算本月</button>
+            </div>
+
+            <!-- 日志区 -->
+            <div class="log-panel">
+                <h3>事件日志</h3>
+                <div id="log-content" class="log-content">
+                    <p class="log-entry">游戏开始！</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 事件弹窗 -->
+        <div id="event-modal" class="modal">
+            <div class="modal-content">
+                <button class="modal-close" id="event-close-btn" aria-label="关闭">×</button>
+                <h2 id="event-title">事件标题</h2>
+                <p id="event-description">事件描述</p>
+                <div id="event-options" class="event-options">
+                    <!-- 动态生成选项按钮 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 游戏结束弹窗 -->
+        <div id="gameover-modal" class="modal">
+            <div class="modal-content">
+                <h2 id="gameover-title">游戏结束</h2>
+                <p id="gameover-reason">结束原因</p>
+                <div id="gameover-stats">
+                    <!-- 最终数据统计 -->
+                </div>
+                <button class="btn btn-primary" id="restart-btn">重新开始</button>
+            </div>
+        </div>
+
+        <!-- 月度总结弹窗 -->
+        <div id="monthly-modal" class="modal">
+            <div class="modal-content">
+                <h2>月度总结</h2>
+                <div id="monthly-content"></div>
+                <button class="btn btn-primary" id="monthly-confirm-btn">确认</button>
+            </div>
+        </div>
+
+        <!-- 说明弹窗 -->
+        <div id="help-modal" class="modal">
+            <div class="modal-content">
+                <button class="modal-close" id="help-close-btn" aria-label="关闭">×</button>
+                <h2>游戏说明</h2>
+                <div class="help-tabs">
+                    <button class="help-tab active" data-tab="help-attrs">属性</button>
+                    <button class="help-tab" data-tab="help-rules">规则</button>
+                    <button class="help-tab" data-tab="help-growth">成长</button>
+                </div>
+
+                <div id="help-attrs" class="help-panel active">
+                    <div class="help-card">
+                        <div class="help-icon">✨</div>
+                        <div>
+                            <h3>角色属性</h3>
+                            <p>创角随机生成，影响收益与事件表现。</p>
+                        </div>
+                    </div>
+                    <div class="help-grid">
+                        <div class="help-item">
+                            <div class="help-item-icon">😍</div>
+                            <div class="help-item-title">颜值</div>
+                            <div class="help-item-desc">粉丝增长与变现效率提升</div>
+                        </div>
+                        <div class="help-item">
+                            <div class="help-item-icon">🎓</div>
+                            <div class="help-item-title">学历</div>
+                            <div class="help-item-desc">内容质量提升，科普类加权</div>
+                        </div>
+                        <div class="help-item">
+                            <div class="help-item-icon">😂</div>
+                            <div class="help-item-title">幽默</div>
+                            <div class="help-item-desc">互动与粉丝增长提升</div>
+                        </div>
+                        <div class="help-item">
+                            <div class="help-item-icon">🌟</div>
+                            <div class="help-item-title">气质</div>
+                            <div class="help-item-desc">人设契合提升，美妆/生活加权</div>
+                        </div>
+                        <div class="help-item">
+                            <div class="help-item-icon">📷</div>
+                            <div class="help-item-title">镜头感</div>
+                            <div class="help-item-desc">内容表现与粉丝增长提升</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="help-rules" class="help-panel">
+                    <div class="help-card">
+                        <div class="help-icon">📜</div>
+                        <div>
+                            <h3>核心规则</h3>
+                            <p>稳住精力与存款，避免违规与崩盘。</p>
+                        </div>
+                    </div>
+                    <div class="help-grid">
+                        <div class="help-item">
+                            <div class="help-item-icon">⚡</div>
+                            <div class="help-item-title">精力</div>
+                            <div class="help-item-desc">归零触发猝死事件</div>
+                        </div>
+                        <div class="help-item">
+                            <div class="help-item-icon">🧠</div>
+                            <div class="help-item-title">心态</div>
+                            <div class="help-item-desc">过低会游戏结束</div>
+                        </div>
+                        <div class="help-item">
+                            <div class="help-item-icon">💰</div>
+                            <div class="help-item-title">存款</div>
+                            <div class="help-item-desc">归零资金链断裂</div>
+                        </div>
+                        <div class="help-item">
+                            <div class="help-item-icon">🎬</div>
+                            <div class="help-item-title">行动次数</div>
+                            <div class="help-item-desc">每月最多5次</div>
+                        </div>
+                        <div class="help-item">
+                            <div class="help-item-icon">⚠️</div>
+                            <div class="help-item-title">擦边试探</div>
+                            <div class="help-item-desc">高收益高风险，影响口碑</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="help-growth" class="help-panel">
+                    <div class="help-card">
+                        <div class="help-icon">🚀</div>
+                        <div>
+                            <h3>成长路径</h3>
+                            <p>从素人到MCN签约，步步为营。</p>
+                        </div>
+                    </div>
+                    <div class="help-timeline">
+                        <div class="timeline-step">
+                            <div class="step-badge">1</div>
+                            <div>
+                                <div class="step-title">内容积累</div>
+                                <div class="step-desc">提升内容质量与人设，稳定涨粉</div>
+                            </div>
+                        </div>
+                        <div class="timeline-step">
+                            <div class="step-badge">2</div>
+                            <div>
+                                <div class="step-title">事件取舍</div>
+                                <div class="step-desc">把握机会，兼顾短期与长期</div>
+                            </div>
+                        </div>
+                        <div class="timeline-step">
+                            <div class="step-badge">3</div>
+                            <div>
+                                <div class="step-title">职级突破</div>
+                                <div class="step-desc">满足进度与门槛条件晋升</div>
+                            </div>
+                        </div>
+                        <div class="timeline-step">
+                            <div class="step-badge">4</div>
+                            <div>
+                                <div class="step-title">顶级签约</div>
+                                <div class="step-desc">达成MCN签约胜利</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 晋升提示弹窗 -->
+        <div id="rankup-modal" class="modal">
+            <div class="modal-content">
+                <button class="modal-close" id="rankup-close-btn" aria-label="关闭">×</button>
+                <h2 id="rankup-title">职级晋升</h2>
+                <p id="rankup-desc"></p>
+                <button class="btn btn-primary" id="rankup-confirm-btn">知道了</button>
+            </div>
+        </div>
+
+        <!-- 菜单弹窗 -->
+        <div id="menu-modal" class="modal">
+            <div class="modal-content">
+                <h2>游戏菜单</h2>
+                <button class="btn btn-wide" id="load-btn">读取存档</button>
+                <button class="btn btn-wide" id="new-game-btn">新游戏</button>
+                <button class="btn btn-wide" id="close-menu-btn">返回游戏</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 脚本加载 -->
+    <script src="js/config.js"></script>
+    <script src="js/events.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/ui.js"></script>
+</body>
+</html>
