@@ -118,7 +118,22 @@ body {
     font-size: clamp(14px, 2vw, 16px);
     font-weight: bold;
     color: #333;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
+    text-align: center;
+}
+
+.attribute-panel .roll-attr-first {
+    display: block;
+    width: 100%;
+    max-width: 280px;
+    margin: 0 auto 8px;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.attribute-panel #attr-tip {
+    margin-bottom: 12px;
     text-align: center;
 }
 
@@ -126,6 +141,7 @@ body {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
     gap: 10px;
+    margin-top: 4px;
     margin-bottom: 15px;
 }
 

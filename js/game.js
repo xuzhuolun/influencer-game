@@ -206,6 +206,21 @@ class InfluencerGame {
         return mult;
     }
 
+    // 粉丝增长：职级、粉丝量、内容质量三维加成（仅用于涨粉，数值越高增长越高）
+    getFanGrowthDimensionMultiplier() {
+        const rankOrder = ['素人', '初级达人', '中级达人', '高级达人', '头部达人', 'MCN签约'];
+        const rankIndex = rankOrder.indexOf(this.state.rank || '素人');
+        const rankMult = 0.85 + rankIndex * 0.19; // 0.85 ~ 1.8
+
+        const fans = this.state.fans || 0;
+        const fansMult = 1 + Math.min(0.35, Math.log10(fans + 1) * 0.08); // 粉丝越多口碑/曝光加成，约 1.0 ~ 1.35
+
+        const quality = Math.max(0, Math.min(100, this.state.contentQuality || 0));
+        const qualityMult = 0.75 + (quality / 100) * 0.75; // 内容质量 0→0.75, 100→1.5
+
+        return rankMult * fansMult * qualityMult;
+    }
+
     // 按职级取权重
     getWeightByRank(map, fallback = 0) {
         if (!map) return fallback;
@@ -375,7 +390,9 @@ class InfluencerGame {
         }
         if (key === 'fans') {
             const baseValue = value > 0 ? Math.floor(value * this.state.fanGrowthRate) : value;
-            let finalValue = value > 0 ? Math.floor(baseValue * this.getAttributeMultiplier('fans')) : value;
+            let finalValue = value > 0
+                ? Math.floor(baseValue * this.getFanGrowthDimensionMultiplier() * this.getAttributeMultiplier('fans'))
+                : value;
             // 应用平台加成
             if (finalValue > 0) {
                 finalValue = Math.floor(finalValue * this.getPlatformBonus('fanGrowth'));
@@ -406,7 +423,12 @@ class InfluencerGame {
         }
         if (key === 'edgeFans') {
             const baseValue = value > 0 ? Math.floor(value * this.state.fanGrowthRate) : value;
-            const finalValue = value > 0 ? Math.floor(baseValue * this.getEdgeMultiplier()) : value;
+            let finalValue = value > 0
+                ? Math.floor(baseValue * this.getFanGrowthDimensionMultiplier() * this.getEdgeMultiplier())
+                : value;
+            if (finalValue > 0) {
+                finalValue = Math.floor(finalValue * this.getPlatformBonus('fanGrowth'));
+            }
             this.state.fans = Math.max(0, this.state.fans + finalValue);
             results.push(`粉丝${finalValue > 0 ? '+' : ''}${finalValue}`);
             return;
@@ -643,7 +665,7 @@ class InfluencerGame {
     // 执行行动
     performAction(actionName) {
         if (!this.canTakeAction()) {
-            return { success: false, message: `本月行动次数已达上限（${this.getActionLimit()}次）` };
+            return { success: false, message: `本月行动次数已达上限（${this.getActionLimit()}次）。\n\n提示：小助理消息、平台管理不消耗行动次数。` };
         }
         const allActions = this.getAvailableActions();
         const action = allActions.find(a => a.name === actionName);
@@ -657,6 +679,11 @@ class InfluencerGame {
         
         // 消耗精力
         this.state.energy -= action.energyCost;
+        this.state.energy = Math.max(0, this.state.energy);
+        if (this.state.energy <= 0) {
+            this.gameOver('精力归零，猝死事件触发，游戏结束');
+            return { success: false, message: '精力归零，猝死事件触发，游戏结束', gameOver: true };
+        }
         
         // 应用效果
         const results = [];
@@ -1458,6 +1485,196 @@ class InfluencerGame {
                 ]
             },
             {
+                title: "播客/电台邀约",
+                description: "📱 助理消息：某知名播客或电台节目想邀请你作为嘉宾参与一期录制，主题围绕你的领域或成长经历。录制一般需要半天，能带来圈层曝光。",
+                isMessage: true,
+                options: [
+                    {
+                        text: "接受邀约，参与录制",
+                        effects: { fans: 600, personaFit: 8, energy: -12, savings: -200 },
+                        type: 'positive'
+                    },
+                    {
+                        text: "婉拒，专注视频内容",
+                        effects: { contentQuality: 5, mood: 5 },
+                        type: 'neutral'
+                    }
+                ]
+            },
+            {
+                title: "公益项目邀请",
+                description: "📱 助理转达：某公益机构或政府项目希望邀请你参与公益宣传（环保、助学、健康等），无报酬但有助于提升正面形象。",
+                isMessage: true,
+                options: [
+                    {
+                        text: "参与公益，传递正能量",
+                        effects: { personaFit: 15, fans: 300, mood: 10, energy: -15, savings: -300 },
+                        type: 'positive'
+                    },
+                    {
+                        text: "婉拒，精力有限",
+                        effects: { mood: -3 },
+                        type: 'neutral'
+                    }
+                ]
+            },
+            {
+                title: "品牌代言续约洽谈",
+                description: "📱 助理来电：之前合作过的品牌方希望续约下一季代言，报价比去年略涨，但要求配合更多线下活动和拍摄。",
+                isMessage: true,
+                options: [
+                    {
+                        text: "接受续约，稳定收入",
+                        effects: { profit: 4000, personaFit: 5, energy: -18 },
+                        type: 'positive'
+                    },
+                    {
+                        text: "谈判提高报价再签",
+                        effects: { profit: 5500, personaFit: 2, energy: -20, mood: -5 },
+                        type: 'mixed'
+                    },
+                    {
+                        text: "婉拒续约，尝试新品牌",
+                        effects: { mood: 5, rankProgress: 3 },
+                        type: 'neutral'
+                    }
+                ]
+            },
+            {
+                title: "线下签售/见面会邀请",
+                description: "📱 助理通知：某书店或商场想为你举办线下签售或粉丝见面会，需你到场 2～3 小时，能显著提升粉丝粘性和人设。",
+                isMessage: true,
+                options: [
+                    {
+                        text: "接受邀请，举办签售",
+                        effects: { fans: 500, personaFit: 12, mood: 8, energy: -20, savings: -800 },
+                        type: 'positive'
+                    },
+                    {
+                        text: "改为线上直播连线",
+                        effects: { fans: 300, personaFit: 6, energy: -10, savings: -200 },
+                        type: 'mixed'
+                    },
+                    {
+                        text: "婉拒",
+                        effects: { energy: 5 },
+                        type: 'neutral'
+                    }
+                ]
+            },
+            {
+                title: "短视频挑战赛/活动邀请",
+                description: "📱 助理消息：平台或品牌方举办短视频挑战赛/主题活动，邀请你担任发起人或嘉宾，需配合拍摄一条示范视频并带话题。",
+                isMessage: true,
+                options: [
+                    {
+                        text: "参与发起，带话题",
+                        effects: { fans: 800, contentQuality: 3, energy: -15, rankProgress: 6 },
+                        type: 'positive'
+                    },
+                    {
+                        text: "只拍一条参与不发起",
+                        effects: { fans: 400, energy: -10 },
+                        type: 'mixed'
+                    },
+                    {
+                        text: "婉拒",
+                        effects: { mood: 3 },
+                        type: 'neutral'
+                    }
+                ]
+            },
+            {
+                title: "政府/机构宣传合作",
+                description: "📱 助理转达：某政府部门或事业单位希望邀请你参与正面宣传（如城市形象、科普、文明倡导等），报酬不高但背书强。",
+                isMessage: true,
+                options: [
+                    {
+                        text: "接受合作，配合宣传",
+                        effects: { personaFit: 18, contentQuality: 5, profit: 1500, energy: -15 },
+                        type: 'positive'
+                    },
+                    {
+                        text: "婉拒，避免敏感",
+                        effects: { mood: 5 },
+                        type: 'neutral'
+                    }
+                ]
+            },
+            {
+                title: "短剧/剧本客串邀约",
+                description: "📱 助理消息：某短剧或网剧剧组想邀请你客串一个小角色，戏份不多但能出圈刷脸，拍摄约 1～2 天。",
+                isMessage: true,
+                options: [
+                    {
+                        text: "接受客串，跨界刷脸",
+                        effects: { fans: 1200, personaFit: 5, energy: -22, profit: 2000 },
+                        type: 'mixed'
+                    },
+                    {
+                        text: "婉拒，专注主业",
+                        effects: { contentQuality: 5, mood: 5 },
+                        type: 'neutral'
+                    }
+                ]
+            },
+            {
+                title: "音乐节/展会嘉宾邀请",
+                description: "📱 助理通知：某音乐节、漫展或行业展会将举办创作者环节，邀请你作为嘉宾出席并做简短分享或互动，曝光偏年轻受众。",
+                isMessage: true,
+                options: [
+                    {
+                        text: "接受邀请，出席活动",
+                        effects: { fans: 700, personaFit: 8, energy: -18, savings: -600 },
+                        type: 'positive'
+                    },
+                    {
+                        text: "婉拒",
+                        effects: { energy: 5 },
+                        type: 'neutral'
+                    }
+                ]
+            },
+            {
+                title: "危机公关/法律顾问推荐",
+                description: "📱 助理提醒：近期你或同行遇到了一些舆论或版权问题，助理推荐了一家靠谱的危机公关/法律顾问机构，可签约做常年顾问，防患于未然。",
+                isMessage: true,
+                options: [
+                    {
+                        text: "签约顾问，买份安心",
+                        effects: { personaFit: 5, savings: -3000, mood: 5 },
+                        type: 'mixed'
+                    },
+                    {
+                        text: "暂不签约，有事再找",
+                        effects: { mood: -2 },
+                        type: 'neutral'
+                    }
+                ]
+            },
+            {
+                title: "粉丝众筹/周边开发邀约",
+                description: "📱 助理消息：有粉丝或小品牌想和你联名做周边/众筹项目（如定制周边、联名款等），分成可观但需要你参与设计和宣传。",
+                isMessage: true,
+                options: [
+                    {
+                        text: "参与联名，开发周边",
+                        effects: { profit: 2500, fans: 400, personaFit: 6, energy: -15, savings: -1000 },
+                        type: 'mixed'
+                    },
+                    {
+                        text: "只授权形象，轻参与",
+                        effects: { profit: 1200, personaFit: 3, energy: -5 },
+                        type: 'mixed'
+                    },
+                    {
+                        text: "婉拒",
+                        effects: { mood: 3 },
+                        type: 'neutral'
+                    }
+                ]
+            },
+            {
                 title: "微娅风波连锁反应",
                 description: "头部主播“微娅”卷入合规风波，平台开始严查直播与带货内容，所有创作者都受到影响。",
                 options: [
@@ -1753,6 +1970,9 @@ class InfluencerGame {
         // 检查游戏结束条件
         if (this.state.mood <= 0) {
             this.gameOver('心态炸了，游戏结束');
+        }
+        if (this.state.energy <= 0) {
+            this.gameOver('精力归零，猝死事件触发，游戏结束');
         }
         if (this.state.savings <= 0) {
             this.gameOver('存款归零，资金链断裂，游戏结束');

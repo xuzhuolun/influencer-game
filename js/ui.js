@@ -470,6 +470,11 @@ class UIController {
             }
         }
 
+        // 精力归零触发猝死
+        if (state.energy <= 0 && !state.isGameOver) {
+            game.gameOver('精力归零，猝死事件触发，游戏结束');
+            this.showGameOver();
+        }
         // 存款归零直接结束
         if (state.savings <= 0 && !state.isGameOver) {
             game.gameOver('存款归零，资金链断裂，游戏结束');
@@ -562,7 +567,7 @@ class UIController {
                 return;
             }
             if (!game.canTakeAction()) {
-                alert(`本月行动次数已达上限（${game.getActionLimit()}次）`);
+                alert(`本月行动次数已达上限（${game.getActionLimit()}次）。\n\n提示：小助理消息、平台管理不消耗行动次数。`);
                 return;
             }
             game.consumeAction();
@@ -572,7 +577,7 @@ class UIController {
         }
         if (actionName === '擦边试探') {
             if (!game.canTakeAction()) {
-                alert(`本月行动次数已达上限（${game.getActionLimit()}次）`);
+                alert(`本月行动次数已达上限（${game.getActionLimit()}次）。\n\n提示：小助理消息、平台管理不消耗行动次数。`);
                 return;
             }
             game.consumeAction();
@@ -594,7 +599,12 @@ class UIController {
                 setTimeout(() => this.triggerEvent(), 500);
             }
         } else {
-            alert(result.message);
+            if (result.gameOver) {
+                this.updateUI();
+                this.showGameOver();
+            } else {
+                alert(result.message);
+            }
         }
     }
 
@@ -702,7 +712,8 @@ class UIController {
             personaFit: game.state.personaFit,
             fans: game.state.fans,
             savings: game.state.savings,
-            violationIndex: game.state.violationIndex
+            violationIndex: game.state.violationIndex,
+            attributes: { ...(game.state.attributes || {}) }
         };
         
         game.handleEventOption(event, optionIndex);
@@ -720,7 +731,8 @@ class UIController {
             personaFit: game.state.personaFit,
             fans: game.state.fans,
             savings: game.state.savings,
-            violationIndex: game.state.violationIndex
+            violationIndex: game.state.violationIndex,
+            attributes: { ...(game.state.attributes || {}) }
         };
         
         // 显示结果反馈
@@ -979,6 +991,21 @@ class UIController {
                 }
                 
                 changes.push({ label, value: valueText, type });
+            }
+        }
+        
+        // 角色属性变化（颜值、学历、幽默、气质、镜头感）
+        const attrList = GameConfig.characterAttributes?.list || [];
+        const beforeAttrs = beforeState.attributes || {};
+        const afterAttrs = afterState.attributes || {};
+        for (const item of attrList) {
+            const before = beforeAttrs[item.key] ?? 0;
+            const after = afterAttrs[item.key] ?? 0;
+            const diff = after - before;
+            if (diff !== 0) {
+                const type = diff > 0 ? 'positive' : 'negative';
+                const valueText = `${diff > 0 ? '+' : ''}${diff}`;
+                changes.push({ label: item.name, value: valueText, type });
             }
         }
         
