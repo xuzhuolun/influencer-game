@@ -696,16 +696,11 @@ const GameConfig = {
 
     // 擦边次数触发专属事件配置（职级越高阈值越低，越容易触发；粉丝量参与严重度）
     edgeEscalationConfig: {
-        // 各职级触发所需擦边次数 [第1档, 第2档, 第3档]
-        rankThresholds: {
-            "素人": [6, 14, 24],
-            "初级达人": [5, 11, 18],
-            "中级达人": [4, 8, 13],
-            "高级达人": [3, 6, 10],
-            "头部达人": [2, 5, 8],
-            "MCN签约": [2, 4, 6]
-        },
-        // 粉丝量档位（用于加重严重度）：达到则 severity 提升
+        // 概率触发：基础概率、每次擦边累加、概率上限（擦边次数/粉丝量/职级越高越易触发）
+        triggerBaseRate: 0.05,
+        triggerPerCountRate: 0.03,
+        triggerMaxRate: 0.85,
+        // 粉丝量档位（用于加重严重度与触发概率）：达到则 severity/概率 提升
         fanSeverityBands: [10000, 100000, 500000]
     },
 
@@ -744,8 +739,8 @@ const GameConfig = {
         { 
             name: "拍摄短视频", 
             energyCost: 15, 
-            effects: { contentQuality: 3, fans: 20, profit: 50 },
-            description: "创作日常短视频内容"
+            effects: { contentQuality: 3, fans: 20, savings: -200 },
+            description: "创作日常短视频内容（需投入制作成本）"
         },
         { 
             name: "直播互动", 

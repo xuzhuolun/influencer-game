@@ -1841,27 +1841,48 @@ class InfluencerGame {
         return severity;
     }
 
-    // 检查擦边次数并触发专属事件（阈值按职级，严重度按职级+粉丝）
+    // 擦边事件触发概率：擦边次数越多、粉丝量越大、职级越高，越容易触发（0~1）
+    getEdgeEscalationTriggerProbability() {
+        const config = GameConfig.edgeEscalationConfig;
+        const baseRate = (config && config.triggerBaseRate != null) ? config.triggerBaseRate : 0.05;
+        const perCountRate = (config && config.triggerPerCountRate != null) ? config.triggerPerCountRate : 0.03;
+        const maxRate = (config && config.triggerMaxRate != null) ? config.triggerMaxRate : 0.85;
+
+        const rankOrder = ['素人', '初级达人', '中级达人', '高级达人', '头部达人', 'MCN签约'];
+        const rankIndex = rankOrder.indexOf(this.state.rank || '素人');
+        const rankBonus = rankIndex * 0.05;
+
+        const fans = this.state.fans || 0;
+        const bands = config?.fanSeverityBands || [10000, 100000, 500000];
+        let fanTier = 0;
+        if (fans >= bands[2]) fanTier = 3;
+        else if (fans >= bands[1]) fanTier = 2;
+        else if (fans >= bands[0]) fanTier = 1;
+        const fanBonus = fanTier * 0.05;
+
+        const countBonus = (this.state.edgeCount || 0) * perCountRate;
+        return Math.min(maxRate, baseRate + countBonus + rankBonus + fanBonus);
+    }
+
+    // 检查擦边并概率触发专属事件（概率受擦边次数、粉丝量、职级影响）
     checkEdgeEscalation() {
         const config = GameConfig.edgeEscalationConfig;
         if (!config) return;
 
-        const thresholds = this.getEdgeThresholdsForCurrentRank();
         const nextLevel = this.state.edgeEscalationLevel || 0;
-        if (nextLevel >= thresholds.length) return;
+        if (nextLevel >= 3) return;
 
-        const threshold = thresholds[nextLevel];
-        if (this.state.edgeCount >= threshold) {
-            let severity = this.getEdgeSeverityLevel();
-            severity = Math.min(3, severity + nextLevel);
-            const edgeEvent = Array.isArray(EdgeEscalationEvents)
-                ? EdgeEscalationEvents.find(e => e.severity === severity)
-                : null;
-            if (edgeEvent && edgeEvent.id) {
-                this.enqueueDeferredEvent({ source: 'edge', severity }, this.state.year, this.state.month);
-                this.state.edgeEscalationLevel = nextLevel + 1;
-                this.addLog(`擦边次数达到${threshold}（职级：${this.state.rank}），触发：${edgeEvent.title}`, 'warning');
-            }
+        if (Math.random() >= this.getEdgeEscalationTriggerProbability()) return;
+
+        let severity = this.getEdgeSeverityLevel();
+        severity = Math.min(3, severity + nextLevel);
+        const edgeEvent = Array.isArray(EdgeEscalationEvents)
+            ? EdgeEscalationEvents.find(e => e.severity === severity)
+            : null;
+        if (edgeEvent && edgeEvent.id) {
+            this.enqueueDeferredEvent({ source: 'edge', severity }, this.state.year, this.state.month);
+            this.state.edgeEscalationLevel = nextLevel + 1;
+            this.addLog(`擦边行为引发关注（职级：${this.state.rank}，粉丝：${(this.state.fans || 0).toLocaleString()}），触发：${edgeEvent.title}`, 'warning');
         }
     }
 
