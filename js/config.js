@@ -486,13 +486,14 @@ const GameConfig = {
         maxPlatforms: 5
     },
 
-    // 粉丝规模对收益加成（正收益）
+    // 粉丝规模对收益加成（涨粉=身价，中后期接广告更爽）
     profitFanMultiplierTiers: [
         { minFans: 0, multiplier: 1.0 },
         { minFans: 1000, multiplier: 1.05 },
-        { minFans: 10000, multiplier: 1.1 },
-        { minFans: 100000, multiplier: 1.2 },
-        { minFans: 500000, multiplier: 1.3 }
+        { minFans: 10000, multiplier: 1.12 },
+        { minFans: 100000, multiplier: 1.25 },
+        { minFans: 500000, multiplier: 1.5 },
+        { minFans: 1000000, multiplier: 1.65 }
     ],
 
     // 不同职级的存款事件权重（越高越容易出现）
@@ -560,7 +561,7 @@ const GameConfig = {
         "MCN签约": 0.35
     },
     
-    // 初始数据
+    // 初始数据（略紧的生存线，强化前期艰难）
     initialData: {
         energy: 80,
         mood: 80,
@@ -569,7 +570,7 @@ const GameConfig = {
         fans: 0,
         violationIndex: 0,
         violationCount: 0,
-        savings: 5000,
+        savings: 4500,
         profit: 0,
         fanGrowthRate: 1,
         violationMultiplier: 1,
@@ -593,8 +594,8 @@ const GameConfig = {
                 { name: "科普脚本创作", rank: "素人", energyCost: 15, effects: { contentQuality: 5, personaFit: 3 } },
                 { name: "专业答疑直播", rank: "初级达人", energyCost: 20, effects: { contentQuality: 8, fans: 50 } },
                 { name: "科普实验演示", rank: "新锐达人", energyCost: 18, effects: { contentQuality: 10, fans: 80 } },
-                { name: "科普书籍合作", rank: "高级达人", energyCost: 25, effects: { contentQuality: 10, profit: 500 } },
-                { name: "权威科普联名", rank: "头部达人", energyCost: 30, effects: { contentQuality: 15, fans: 1000, profit: 2000 } }
+                { name: "科普书籍合作", rank: "高级达人", energyCost: 25, effects: { contentQuality: 10, profit: 800 } },
+                { name: "权威科普联名", rank: "头部达人", energyCost: 30, effects: { contentQuality: 15, fans: 1000, profit: 3500 } }
             ],
             profitChannel: "知识付费变现系数+0.2；商务报价（教育、科技类）+30%；职级每提升1级，商务报价额外+10%",
             risk: "科普内容错误、虚假科普；擦边玩谐音梗（低俗化科普、过度娱乐化解读专业知识）；职级越高，违规处罚越重",
@@ -609,8 +610,8 @@ const GameConfig = {
                 { name: "日常干饭直播", rank: "素人", energyCost: 15, effects: { mood: 5, fans: 30 } },
                 { name: "美食探店", rank: "初级达人", energyCost: 20, effects: { fans: 80, profit: 200 } },
                 { name: "食品测评带货", rank: "中级达人", energyCost: 25, effects: { fans: 150, profit: 800 } },
-                { name: "餐饮品牌专场", rank: "进阶达人", energyCost: 26, effects: { fans: 400, profit: 1500 } },
-                { name: "餐饮头部品牌合作", rank: "头部达人", energyCost: 30, effects: { fans: 800, profit: 3000 } }
+                { name: "餐饮品牌专场", rank: "进阶达人", energyCost: 26, effects: { fans: 400, profit: 2000 } },
+                { name: "餐饮头部品牌合作", rank: "头部达人", energyCost: 30, effects: { fans: 800, profit: 5000 } }
             ],
             profitChannel: "食品类带货佣金+25%；餐饮品牌商务邀约概率+40%；职级每提升1级，邀约概率额外+8%",
             risk: "食品卫生问题、虚假宣传（夸大口感）；擦边玩谐音梗（过度暴饮暴食博眼球、低俗互动、着装擦边）；职级越高，违规封禁概率越高",
@@ -624,8 +625,8 @@ const GameConfig = {
             exclusiveActions: [
                 { name: "妆容教程", rank: "素人", energyCost: 15, effects: { personaFit: 5, contentQuality: 3 } },
                 { name: "美妆好物分享", rank: "初级达人", energyCost: 20, effects: { personaFit: 8, profit: 300 } },
-                { name: "品牌美妆专场直播", rank: "高级达人", energyCost: 25, effects: { fans: 200, profit: 1000 } },
-                { name: "美妆品牌代言", rank: "头部达人", energyCost: 30, effects: { fans: 1000, profit: 5000, personaFit: 10 } }
+                { name: "品牌美妆专场直播", rank: "高级达人", energyCost: 25, effects: { fans: 200, profit: 1500 } },
+                { name: "美妆品牌代言", rank: "头部达人", energyCost: 30, effects: { fans: 1000, profit: 8000, personaFit: 10 } }
             ],
             profitChannel: "美妆类广告报价+35%；美妆带货转化率+20%；职级每提升1级，转化率额外+4%",
             risk: "美妆产品过敏、虚假宣传（夸大功效）；擦边玩谐音梗（着装擦边、低俗妆容解读、过度营销擦边话术）；职级越高，品牌追责风险越高",
@@ -640,8 +641,8 @@ const GameConfig = {
                 { name: "日常vlog拍摄", rank: "素人", energyCost: 10, effects: { mood: 3, fans: 20 } },
                 { name: "生活好物分享", rank: "初级达人", energyCost: 15, effects: { fans: 60, profit: 250 } },
                 { name: "生活场景植入广告", rank: "中级达人", energyCost: 20, effects: { profit: 600, fans: 100 } },
-                { name: "生活类IP联名", rank: "进阶达人", energyCost: 22, effects: { fans: 500, profit: 2000 } },
-                { name: "生活类顶流合作", rank: "头部达人", energyCost: 25, effects: { fans: 1200, profit: 4000 } }
+                { name: "生活类IP联名", rank: "进阶达人", energyCost: 22, effects: { fans: 500, profit: 2500 } },
+                { name: "生活类顶流合作", rank: "头部达人", energyCost: 25, effects: { fans: 1200, profit: 6000 } }
             ],
             profitChannel: "全品类商务邀约概率+25%；变现渠道无明显短板，稳定性强；职级每提升1级，全品类邀约概率额外+6%",
             risk: "隐私泄露、内容低俗、植入广告过多；擦边玩谐音梗（低俗日常片段、过度博眼球的场景演绎、擦边话术互动）；职级越高，内容审核越严格",
@@ -754,26 +755,26 @@ const GameConfig = {
         fanSeverityBands: [10000, 100000, 500000]
     },
 
-    // 评分权重
+    // 评分权重（粉丝权重提高，涨粉更直接影响进度与爽感）
     scoreWeights: {
-        contentQuality: 0.28,
-        personaFit: 0.28,
+        contentQuality: 0.26,
+        personaFit: 0.26,
         mood: 0.18,
-        energy: 0.18,
-        fans: 0.08
+        energy: 0.16,
+        fans: 0.14
     },
 
-    // 月度结算评分
+    // 月度结算评分（不合格惩罚加重，强化生存压力）
     monthlySettle: {
         excellent: { score: 80, progressAdd: 30, name: "优秀" },
         good: { score: 60, progressAdd: 15, name: "良好" },
         qualified: { score: 40, progressAdd: 8, name: "合格" },
-        unqualified: { score: 0, progressAdd: -10, name: "不合格" }
+        unqualified: { score: 0, progressAdd: -15, name: "不合格" }
     },
 
-    // 每月固定支出
+    // 每月固定支出（房租略涨，素人期更紧）
     monthlyExpenses: {
-        rent: 800,
+        rent: 1000,
         teamCostByRank: {
             "素人": 0,
             "初级达人": 200,

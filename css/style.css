@@ -173,12 +173,12 @@ body {
 }
 
 .attribute-chip {
-    background: white;
-    border: 1px solid #e0e0e0;
+    background: #f7fafc;
+    border: 1px solid #e2e8f0;
     padding: 6px 10px;
     border-radius: 999px;
     font-size: 12px;
-    color: #555;
+    color: #2d3748;
 }
 
 /* 按钮样式 */
@@ -597,7 +597,577 @@ body {
     margin-bottom: 4px;
 }
 
-/* 主游戏界面 */
+/* 主游戏界面（分页签布局） */
+#main-game-screen.main-game-with-tabs {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+    position: relative;
+}
+
+.status-bar-compact {
+    flex-shrink: 0;
+}
+
+.tab-content-area {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 0;
+}
+
+.tab-panel {
+    display: none;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 16px;
+    padding-bottom: 80px;
+}
+
+.tab-panel.active {
+    display: block;
+    animation: fadeIn 0.25s ease;
+}
+
+/* 三个页签占用相同高度：填满内容区，内容多时在各自内部滚动 */
+.tab-panel-fixed {
+    flex: 1;
+    min-height: 0;
+}
+
+/* 个人主页页签（小红书风格） */
+.profile-header-card {
+    background: linear-gradient(180deg, rgba(102, 126, 234, 0.06) 0%, #f8fafc 80px);
+    border-radius: 16px;
+    padding: 24px 20px;
+    margin-bottom: 16px;
+    border: 1px solid #e2e8f0;
+}
+
+.profile-avatar-wrap {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 12px;
+}
+
+.profile-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: white;
+    border: 3px solid rgba(102, 126, 234, 0.3);
+    display: grid;
+    place-items: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.profile-avatar svg {
+    width: 64px;
+    height: 64px;
+    display: block;
+}
+
+.profile-name {
+    font-size: 20px;
+    font-weight: bold;
+    color: #1a202c;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.profile-meta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.profile-stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.profile-stat {
+    background: white;
+    border-radius: 12px;
+    padding: 14px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    border: 1px solid #eee;
+}
+
+.profile-stat-num {
+    display: block;
+    font-size: 18px;
+    font-weight: bold;
+    color: #2d3748;
+    margin-bottom: 4px;
+}
+
+.profile-stat-label {
+    font-size: 12px;
+    color: #4a5568;
+    font-weight: 500;
+}
+
+.profile-section {
+    margin-bottom: 16px;
+}
+
+.profile-section-title {
+    font-size: 14px;
+    font-weight: bold;
+    color: #2d3748;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.profile-category-display {
+    font-size: 14px;
+    color: #1a202c;
+    padding: 8px 12px;
+    background: #f7fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+/* 个人主页内标签：深色字+浅底，避免撞色 */
+#tab-profile .profile-meta .platform-tag,
+#tab-profile .profile-meta .category-tag,
+#tab-profile .profile-meta .rank-tag {
+    background: #edf2f7;
+    color: #2d3748;
+    border: 1px solid #cbd5e0;
+}
+
+.profile-bars {
+    margin-top: 16px;
+}
+
+/* 个人主页假推送/热搜区域 */
+.profile-feed-section {
+    margin-top: 20px;
+}
+
+.feed-block {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.feed-block-title {
+    font-size: 15px;
+    font-weight: bold;
+    color: #2d3748;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.feed-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.feed-item {
+    font-size: 14px;
+    color: #2d3748;
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.feed-item:last-child {
+    border-bottom: none;
+}
+
+.feed-rank {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    background: #667eea;
+    color: #fff;
+    font-size: 12px;
+    font-weight: bold;
+    border-radius: 4px;
+}
+
+.feed-item-sub {
+    color: #4a5568;
+    font-size: 13px;
+}
+
+/* 行动页签：属性块置顶 */
+.action-attributes-block {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.action-attributes-block .profile-section-title {
+    color: #2d3748;
+}
+
+.action-attributes-block .stat-label {
+    color: #4a5568;
+    font-weight: 500;
+}
+
+.action-attributes-block .stat-value {
+    color: #2d3748;
+}
+
+.action-attributes-block .attribute-chip {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    color: #2d3748;
+}
+
+.profile-bar-item {
+    display: grid;
+    grid-template-columns: 72px 1fr 72px;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.profile-bar-item .stat-label {
+    font-size: 12px;
+    color: #4a5568;
+    font-weight: 500;
+}
+
+.profile-bar-item .stat-bar {
+    height: 16px;
+}
+
+.profile-bar-item .stat-value {
+    font-size: 12px;
+    text-align: right;
+    color: #2d3748;
+}
+
+/* 消息页签（小红书风格） */
+.messages-page-header {
+    margin-bottom: 16px;
+}
+
+.messages-page-title {
+    font-size: 20px;
+    font-weight: bold;
+    color: #2d3748;
+    text-align: center;
+}
+
+.messages-categories {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.message-category-card {
+    position: relative;
+    outline: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 12px;
+    background: white;
+    border: 2px solid #eee;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    min-height: 100px;
+}
+
+.message-category-card:hover {
+    border-color: #667eea;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+    transform: translateY(-2px);
+}
+
+.message-category-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    margin-bottom: 8px;
+}
+
+.message-category-icon-pink {
+    background: #ffe0e8;
+    color: #e91e63;
+}
+
+.message-category-icon-blue {
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+.message-category-icon-green {
+    background: #e8f5e9;
+    color: #388e3c;
+}
+
+.message-category-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #2d3748;
+    text-align: center;
+}
+
+/* 新增关注：仅展示，不可点击 */
+.message-category-card-static {
+    cursor: default;
+    pointer-events: none;
+}
+
+.message-category-card-static:hover {
+    transform: none;
+    border-color: #eee;
+    box-shadow: none;
+}
+
+.message-category-value {
+    display: block;
+    font-size: 18px;
+    font-weight: bold;
+    color: #2d3748;
+    margin-top: 6px;
+}
+
+.message-category-value.positive {
+    color: #2f855a;
+}
+
+.messages-list-hint {
+    background: #f7fafc;
+    padding: 14px;
+    border-radius: 12px;
+    font-size: 13px;
+    color: #4a5568;
+    line-height: 1.6;
+    border: 1px solid #e2e8f0;
+}
+
+/* 底部页签导航（小红书风格） */
+.bottom-tab-nav {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    background: white;
+    border-top: 1px solid #eee;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    flex-shrink: 0;
+    z-index: 10;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.bottom-tab-item {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 16px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #999;
+    font-size: 12px;
+    transition: all 0.2s;
+    border-radius: 8px;
+}
+
+.bottom-tab-item.has-badge::after {
+    content: '';
+    position: absolute;
+    top: 6px;
+    right: 50%;
+    margin-right: -20px;
+    width: 8px;
+    height: 8px;
+    background: #ff4757;
+    border-radius: 50%;
+    border: 2px solid white;
+}
+
+.bottom-tab-item .bottom-tab-icon {
+    font-size: 22px;
+    margin-bottom: 2px;
+}
+
+.bottom-tab-item:hover {
+    color: #667eea;
+}
+
+.bottom-tab-item.active {
+    color: #ff2442;
+    font-weight: bold;
+}
+
+.bottom-tab-item.active .bottom-tab-icon {
+    filter: none;
+}
+
+/* 评论与事件二级界面（事件中心） */
+.events-panel-content {
+    width: 520px;
+    max-width: 92%;
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
+.events-panel-header {
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.events-panel-title {
+    font-size: 22px;
+    font-weight: bold;
+    color: #2d3748;
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+.events-panel-desc {
+    font-size: 14px;
+    color: #4a5568;
+    text-align: center;
+    margin: 0;
+}
+
+.events-panel-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.events-panel-card {
+    display: block;
+    width: 100%;
+    padding: 16px 18px;
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    text-align: left;
+}
+
+.events-panel-card:hover {
+    border-color: #667eea;
+    background: #f0f4ff;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+    transform: translateY(-2px);
+}
+
+.events-panel-card-title {
+    font-size: 15px;
+    font-weight: bold;
+    color: #2d3748;
+    margin-bottom: 6px;
+}
+
+.events-panel-card-preview {
+    font-size: 13px;
+    color: #4a5568;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.events-panel-card-tag {
+    display: inline-block;
+    margin-top: 8px;
+    font-size: 12px;
+    color: #667eea;
+    font-weight: 500;
+}
+
+.events-panel-draw-card .events-panel-card-tag {
+    color: #fff;
+    background: #667eea;
+    padding: 6px 14px;
+    border-radius: 8px;
+    margin-top: 12px;
+}
+
+.events-panel-draw-card:hover .events-panel-card-tag {
+    background: #5568d3;
+}
+
+.events-panel-empty {
+    text-align: center;
+    padding: 32px 20px;
+    margin-bottom: 20px;
+}
+
+.events-panel-empty-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+    opacity: 0.6;
+}
+
+.events-panel-empty-text {
+    font-size: 14px;
+    color: #718096;
+    margin: 0;
+}
+
+.events-panel-empty-hint {
+    font-size: 12px;
+    color: #a0aec0;
+    margin: 8px 0 0;
+}
+
+/* 行动页签内面板保持原有样式 */
+#tab-actions .action-panel {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+#tab-messages .log-panel {
+    margin-top: 20px;
+    max-height: 280px;
+}
+
+#tab-messages .log-panel h3 {
+    color: #2d3748;
+}
+
 #main-game-screen {
     padding: 0;
 }
@@ -1029,6 +1599,14 @@ body {
     font-weight: bold;
     color: #667eea;
     margin: 8px 0;
+}
+
+.monthly-card .value.positive {
+    color: #10b981;
+}
+
+.monthly-card .value.negative {
+    color: #ef4444;
 }
 
 .monthly-change {

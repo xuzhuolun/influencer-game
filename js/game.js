@@ -45,6 +45,8 @@ class InfluencerGame {
             lastRankUp: null,
             messages: [],  // 助理消息队列
             messageIdCounter: 1,  // 消息ID计数器
+            pendingEvents: [],  // 已触发、待处理的评论/事件（由行动、月末等触发，在评论与事件中处理）
+            pendingEventIdCounter: 1,
             subPlatforms: [],  // 副平台账号列表
             deferredOnboarding: [],  // 延迟的引导消息队列
             edgeCount: 0,  // 擦边次数累计
@@ -83,12 +85,15 @@ class InfluencerGame {
             deferredOnboarding: [],
             messages: [],
             messageIdCounter: 1,
+            pendingEvents: [],
+            pendingEventIdCounter: 1,
             subPlatforms: [],
             edgeCount: 0,
             edgeEscalationLevel: 0,
             lastMonthStats: {
                 fans: 0,
-                savings: 5000
+                savings: 4500,
+                profit: 0
             }
         };
         this.eventLog = [];
@@ -1204,10 +1209,12 @@ class InfluencerGame {
                     }
                 ]
             },
-            // 负向事件
+            // 负向事件（代入感：先以消息形式出现在「消息」页，点击后再选择）
             {
                 title: "黑粉恶意攻击",
                 description: "大量黑粉涌入评论区进行人身攻击！",
+                isMessage: true,
+                messagePreview: "有人在评论区骂你",
                 options: [
                     {
                         text: "保持冷静，关闭评论",
@@ -1229,6 +1236,8 @@ class InfluencerGame {
             {
                 title: "平台限流",
                 description: "不知为何，你的内容突然被限流，曝光量大幅下降！",
+                isMessage: true,
+                messagePreview: "你的内容被限流了",
                 options: [
                     {
                         text: "联系客服，积极申诉",
@@ -1261,6 +1270,8 @@ class InfluencerGame {
             {
                 title: "竞争对手抄袭",
                 description: "发现有人大量抄袭你的创意和内容！",
+                isMessage: true,
+                messagePreview: "有人抄袭你的内容",
                 options: [
                     {
                         text: "公开维权，打击抄袭",
@@ -1290,7 +1301,141 @@ class InfluencerGame {
                     }
                 ]
             },
-            
+            // 举报/诽谤/抹黑类（重点检验存款与粉丝数，扣除量大）
+            {
+                title: "竞争对手举报你违规",
+                description: "📱 小助理紧急通知：有匿名账号向平台大量举报你的历史内容涉嫌违规，平台已启动核查。业内传闻是同行或竞品在背后推动。一旦成立，可能面临限流甚至封号风险。",
+                isMessage: true,
+                messagePreview: "你被举报违规了",
+                options: [
+                    {
+                        text: "积极配合平台，主动下架争议内容",
+                        effects: { violationIndex: 5, fans: -1200, mood: -20, energy: -15 },
+                        type: 'negative'
+                    },
+                    {
+                        text: "聘请律师与公关，据理力争（需花费大量存款）",
+                        effects: { violationIndex: 2, fans: -600, savings: -6000, mood: -10, personaFit: 5 },
+                        type: 'mixed'
+                    },
+                    {
+                        text: "冷处理，等风头过去",
+                        effects: { violationIndex: 8, fans: -2200, mood: -25, personaFit: -10 },
+                        type: 'negative'
+                    }
+                ]
+            },
+            {
+                title: "被恶意诽谤造谣",
+                description: "有人在社交平台散布关于你的不实黑料（私生活、造假、人品等），话题迅速发酵，评论区沦陷。像极了现实中明星被带节奏的剧情。",
+                isMessage: true,
+                messagePreview: "网上有人在造你的谣",
+                options: [
+                    {
+                        text: "发律师函并出澄清视频（耗存款）",
+                        effects: { fans: -1000, mood: -18, savings: -4000, personaFit: 8, energy: -20 },
+                        type: 'mixed'
+                    },
+                    {
+                        text: "冷处理，不回应",
+                        effects: { fans: -2800, mood: -25, personaFit: -12 },
+                        type: 'negative'
+                    },
+                    {
+                        text: "开直播正面刚，晒证据",
+                        effects: { fans: 100, mood: -12, energy: -25, personaFit: 10 },
+                        type: 'mixed'
+                    }
+                ]
+            },
+            {
+                title: "黑公关带节奏",
+                description: "多个营销号同时发文抹黑你，评论区出现大量相似话术的水军，明显是有组织在带节奏。粉丝开始动摇，路人观感变差。",
+                isMessage: true,
+                messagePreview: "有人雇水军黑你",
+                options: [
+                    {
+                        text: "发声明澄清，保留追责",
+                        effects: { fans: -1500, mood: -20, personaFit: 5, energy: -15 },
+                        type: 'negative'
+                    },
+                    {
+                        text: "用作品说话，专心出爆款",
+                        effects: { fans: -900, contentQuality: 10, mood: -10, energy: -25 },
+                        type: 'mixed'
+                    },
+                    {
+                        text: "自己也找公关反制（烧钱，扣大量存款）",
+                        effects: { fans: -500, savings: -8000, mood: -8, violationIndex: 3 },
+                        type: 'mixed'
+                    }
+                ]
+            },
+            {
+                title: "恶意剪辑翻车",
+                description: "你某条直播或视频被断章取义剪成「黑料」在各大平台传播，骂声一片，品牌方暂停合作，粉丝大量取关。",
+                isMessage: true,
+                messagePreview: "你被恶意剪辑挂网上骂了",
+                options: [
+                    {
+                        text: "立刻发完整录像澄清",
+                        effects: { fans: -1800, mood: -22, personaFit: 6, energy: -18 },
+                        type: 'negative'
+                    },
+                    {
+                        text: "道歉并下架争议片段",
+                        effects: { fans: -3200, mood: -28, personaFit: -5 },
+                        type: 'negative'
+                    },
+                    {
+                        text: "硬刚到底，起诉传播者（律师费扣存款）",
+                        effects: { fans: -800, savings: -7000, mood: -15, personaFit: 8 },
+                        type: 'mixed'
+                    }
+                ]
+            },
+            {
+                title: "举报导致合作解约",
+                description: "品牌方收到「消费者」大量投诉和举报，虽未实锤，但为保形象决定暂停与你的合作并索要部分预付赔偿，存款与心态双杀。",
+                isMessage: true,
+                messagePreview: "品牌方要和你解约",
+                options: [
+                    {
+                        text: "接受解约，退还部分款项",
+                        effects: { savings: -8000, mood: -25, fans: -800 },
+                        type: 'negative'
+                    },
+                    {
+                        text: "协商各担一半，低调收场",
+                        effects: { savings: -5000, mood: -18, fans: -400, personaFit: 3 },
+                        type: 'mixed'
+                    },
+                    {
+                        text: "拒绝赔偿，走法律程序（仍可能扣款）",
+                        effects: { savings: -3500, mood: -20, fans: -600, energy: -20 },
+                        type: 'mixed'
+                    }
+                ]
+            },
+            {
+                title: "澄清后舆论反转",
+                description: "你之前被黑的澄清内容被官方或大V转发，舆论反转，路人缘回升，不少人在评论区道歉。危机有时也是转机。",
+                isMessage: true,
+                messagePreview: "澄清被转发了，舆论反转",
+                options: [
+                    {
+                        text: "趁势做一期「回应争议」内容",
+                        effects: { fans: 1200, mood: 15, personaFit: 12, energy: -15 },
+                        type: 'positive'
+                    },
+                    {
+                        text: "低调收尾，不刻意提",
+                        effects: { fans: 500, mood: 20, personaFit: 8 },
+                        type: 'positive'
+                    }
+                ]
+            },
+
             // 抉择事件
             {
                 title: "MCN签约邀约",
@@ -2044,16 +2189,19 @@ class InfluencerGame {
         this.state.trainingCount = 0;
         this.state.actionCount = 0;
         
-        // 计算月度变化
+        // 计算月度变化（含本月收益，用于结算展示与爽感）
+        const lastProfit = this.state.lastMonthStats.profit != null ? this.state.lastMonthStats.profit : 0;
         const monthlyChange = {
             fans: this.state.fans - this.state.lastMonthStats.fans,
-            savings: this.state.savings - this.state.lastMonthStats.savings
+            savings: this.state.savings - this.state.lastMonthStats.savings,
+            profit: (this.state.profit || 0) - lastProfit
         };
         
         // 更新上个月的统计数据
         this.state.lastMonthStats = {
             fans: this.state.fans,
-            savings: this.state.savings
+            savings: this.state.savings,
+            profit: this.state.profit || 0
         };
         
         // 检查是否有延迟的引导消息要触发
@@ -2219,7 +2367,31 @@ class InfluencerGame {
         }
         if (!Array.isArray(this.state.messages)) this.state.messages = [];
         if (typeof this.state.messageIdCounter !== 'number') this.state.messageIdCounter = 1;
+        if (!Array.isArray(this.state.pendingEvents)) this.state.pendingEvents = [];
+        if (typeof this.state.pendingEventIdCounter !== 'number') this.state.pendingEventIdCounter = 1;
         if (!Array.isArray(this.state.deferredOnboarding)) this.state.deferredOnboarding = [];
+    }
+
+    // 添加已触发事件到待处理队列（评论与事件中展示，由行动/月末等触发）
+    addPendingEvent(event) {
+        const id = this.state.pendingEventIdCounter++;
+        const item = {
+            id,
+            event,
+            time: `${this.state.year}年${this.state.month}月`,
+            timestamp: Date.now()
+        };
+        this.state.pendingEvents.push(item);
+        return id;
+    }
+
+    getPendingEvents() {
+        return this.state.pendingEvents || [];
+    }
+
+    removePendingEvent(id) {
+        const idx = this.state.pendingEvents.findIndex(p => p.id === id);
+        if (idx !== -1) this.state.pendingEvents.splice(idx, 1);
     }
 
     // 添加消息到队列

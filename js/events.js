@@ -116,6 +116,8 @@ const EventLibrary = {
             {
                 title: "科普内容被质疑",
                 description: "专业人士指出你的科普内容存在知识性错误，引发争议！",
+                isMessage: true,
+                messagePreview: "有人质疑你的科普内容",
                 options: [
                     {
                         text: "虚心道歉，认真更正",
@@ -2855,9 +2857,34 @@ const LowProbabilityBigImpactEvents = [
         id: "lowprob-viral-negative",
         title: "被骂上热搜",
         description: "一条内容被误解或恶意剪辑，骂声一片，粉丝与心态都受冲击。",
+        isMessage: true,
+        messagePreview: "你被骂上热搜了",
         options: [
             { text: "诚恳回应并下架争议内容", effects: { fans: -1500, personaFit: 12, mood: -25 }, type: 'negative' },
             { text: "硬刚到底", effects: { fans: -2500, personaFit: -15, mood: -30 }, type: 'negative' }
+        ]
+    },
+    {
+        id: "lowprob-mass-report",
+        title: "大规模举报与限流",
+        description: "疑似有组织对你进行集中举报，平台对账号做出限流甚至短期禁言处理，粉丝大量取关，合作方观望。对存款与粉丝都是严峻考验。",
+        isMessage: true,
+        messagePreview: "你被大规模举报了",
+        options: [
+            { text: "申诉并配合整改", effects: { fans: -4000, violationIndex: 6, mood: -28, energy: -20 }, type: 'negative' },
+            { text: "找内部关系沟通（花大笔存款）", effects: { fans: -2000, savings: -6000, mood: -15, violationIndex: 2 }, type: 'mixed' },
+            { text: "低调熬过处罚期", effects: { fans: -5500, mood: -22, personaFit: -8 }, type: 'negative' }
+        ]
+    },
+    {
+        id: "lowprob-defamation-lawsuit",
+        title: "诽谤官司胜诉",
+        description: "此前造谣你的当事人被判败诉，你获得赔偿与公开道歉，口碑回升，粉丝与存款都有所恢复。",
+        isMessage: true,
+        messagePreview: "你的诽谤官司赢了",
+        options: [
+            { text: "公开判决书，正名", effects: { fans: 1200, savings: 5000, mood: 25, personaFit: 15 }, type: 'positive' },
+            { text: "低调收赔偿，不炒作", effects: { savings: 8000, mood: 20, personaFit: 10 }, type: 'positive' }
         ]
     },
     {

@@ -75,16 +75,13 @@
             </div>
         </div>
 
-        <!-- 主游戏界面 -->
-        <div id="main-game-screen" class="screen">
-            <!-- 顶部状态栏 -->
-            <div class="status-bar">
+        <!-- 主游戏界面（平台风格分页签） -->
+        <div id="main-game-screen" class="screen main-game-with-tabs">
+            <!-- 顶部状态栏（精简） -->
+            <div class="status-bar status-bar-compact">
                 <div class="status-left">
                     <div id="avatar-display" class="avatar-display" aria-label="avatar"></div>
                     <span class="influencer-name-display" id="name-display">未命名</span>
-                    <span class="platform-tag" id="platform-display">未选择平台</span>
-                    <span class="category-tag" id="category-display">未分类</span>
-                    <span class="rank-tag" id="rank-display">素人</span>
                 </div>
                 <div class="status-right">
                     <span id="month-display">第1月</span>
@@ -94,94 +91,159 @@
                 </div>
             </div>
 
-            <!-- 数值面板 -->
-            <div class="stats-panel">
-                <div class="stat-item">
-                    <span class="stat-label">精力</span>
-                    <div class="stat-bar">
-                        <div class="stat-fill" id="energy-bar" style="width: 80%"></div>
+            <!-- 页签内容区 -->
+            <div class="tab-content-area">
+                <!-- 页签1：个人主页（仅展示+假推送/热搜） -->
+                <div id="tab-profile" class="tab-panel tab-panel-fixed active">
+                    <div class="profile-header-card">
+                        <div class="profile-avatar-wrap">
+                            <div id="profile-avatar" class="profile-avatar" aria-label="avatar"></div>
+                        </div>
+                        <div class="profile-name" id="profile-name">未命名</div>
+                        <div class="profile-meta">
+                            <span class="platform-tag" id="platform-display">未选择平台</span>
+                            <span class="category-tag" id="category-display">未分类</span>
+                            <span class="rank-tag" id="rank-display">素人</span>
+                        </div>
+                        <div class="profile-stats-row">
+                            <div class="profile-stat">
+                                <span class="profile-stat-num" id="fans-value">0</span>
+                                <span class="profile-stat-label">粉丝</span>
+                            </div>
+                            <div class="profile-stat">
+                                <span class="profile-stat-num" id="savings-value">¥0</span>
+                                <span class="profile-stat-label">存款</span>
+                            </div>
+                            <div class="profile-stat">
+                                <span class="profile-stat-num" id="violation-value">0</span>
+                                <span class="profile-stat-label">违规指数</span>
+                            </div>
+                        </div>
+                        <div class="profile-section">
+                            <span class="profile-section-title">主播类型</span>
+                            <div class="profile-category-display" id="profile-category">—</div>
+                        </div>
                     </div>
-                    <span class="stat-value" id="energy-value">80/100</span>
+                    <!-- 假推送/热搜榜填充主页 -->
+                    <div class="profile-feed-section">
+                        <div class="feed-block">
+                            <h3 class="feed-block-title">今日热搜</h3>
+                            <ul class="feed-list">
+                                <li class="feed-item"><span class="feed-rank">1</span> 某顶流官宣恋情 爆</li>
+                                <li class="feed-item"><span class="feed-rank">2</span> 新剧开播话题破亿 热</li>
+                                <li class="feed-item"><span class="feed-rank">3</span> 美食探店翻车引争议 新</li>
+                                <li class="feed-item"><span class="feed-rank">4</span> 平台新规影响创作者 新</li>
+                                <li class="feed-item"><span class="feed-rank">5</span> 素人逆袭涨粉百万 热</li>
+                            </ul>
+                        </div>
+                        <div class="feed-block">
+                            <h3 class="feed-block-title">推荐关注</h3>
+                            <ul class="feed-list">
+                                <li class="feed-item feed-item-sub">同领域优质创作者 · 可借鉴</li>
+                                <li class="feed-item feed-item-sub">平台官方活动 · 流量扶持</li>
+                                <li class="feed-item feed-item-sub">热门话题 · 可参与创作</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
-                <div class="stat-item">
-                    <span class="stat-label">心态</span>
-                    <div class="stat-bar">
-                        <div class="stat-fill" id="mood-bar" style="width: 80%"></div>
+
+                <!-- 页签2：消息（固定高度与其它页签一致） -->
+                <div id="tab-messages" class="tab-panel tab-panel-fixed">
+                    <div class="messages-page-header">
+                        <h2 class="messages-page-title">消息</h2>
                     </div>
-                    <span class="stat-value" id="mood-value">80/100</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">内容质量</span>
-                    <div class="stat-bar">
-                        <div class="stat-fill stat-fill-blue" id="quality-bar" style="width: 20%"></div>
+                    <div class="messages-categories">
+                        <button type="button" class="message-category-card" id="message-btn">
+                            <div class="message-category-icon message-category-icon-pink">❤</div>
+                            <span class="message-category-label">小助理来信</span>
+                            <span class="message-badge-large" id="message-badge" style="display: none;">0</span>
+                        </button>
+                        <div class="message-category-card message-category-card-static">
+                            <div class="message-category-icon message-category-icon-blue">👤</div>
+                            <span class="message-category-label">新增关注</span>
+                            <span class="message-category-value" id="monthly-fan-gain">+0</span>
+                        </div>
+                        <button type="button" class="message-category-card" id="trigger-event-comment-btn">
+                            <div class="message-category-icon message-category-icon-green">💬</div>
+                            <span class="message-category-label">评论与事件</span>
+                            <span class="message-badge-large" id="events-pending-badge" style="display: none;">0</span>
+                        </button>
                     </div>
-                    <span class="stat-value" id="quality-value">20/100</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">人设契合</span>
-                    <div class="stat-bar">
-                        <div class="stat-fill stat-fill-blue" id="persona-bar" style="width: 20%"></div>
+                    <div class="messages-list-hint">
+                        <p>点击「小助理来信」查看商业邀约；点击「评论与事件」查看已触发的评论与事件并做出选择（事件由行动、月末等自动触发）。</p>
                     </div>
-                    <span class="stat-value" id="persona-value">20/100</span>
-                </div>
-                <div class="stat-row">
-                    <div class="stat-box">
-                        <span class="stat-label">粉丝数</span>
-                        <span class="stat-number" id="fans-value">0</span>
-                    </div>
-                    <div class="stat-box">
-                        <span class="stat-label">存款</span>
-                        <span class="stat-number" id="savings-value">¥0</span>
-                    </div>
-                    <div class="stat-box">
-                        <span class="stat-label">违规指数</span>
-                        <span class="stat-number" id="violation-value">0</span>
+                    <div class="log-panel">
+                        <h3>事件日志</h3>
+                        <div id="log-content" class="log-content">
+                            <p class="log-entry">游戏开始！</p>
+                        </div>
                     </div>
                 </div>
-                <div class="attribute-display">
-                    <span class="stat-label">角色属性</span>
-                    <div id="attribute-display" class="attribute-display-list"></div>
+
+                <!-- 页签3：行动（属性置顶，便于根据属性选行动） -->
+                <div id="tab-actions" class="tab-panel tab-panel-fixed">
+                    <div class="action-attributes-block">
+                        <div class="profile-section">
+                            <span class="profile-section-title">角色属性</span>
+                            <div id="attribute-display" class="attribute-display-list"></div>
+                        </div>
+                        <div class="profile-bars">
+                            <div class="profile-bar-item">
+                                <span class="stat-label">精力</span>
+                                <div class="stat-bar"><div class="stat-fill" id="energy-bar" style="width: 80%"></div></div>
+                                <span class="stat-value" id="energy-value">80/100</span>
+                            </div>
+                            <div class="profile-bar-item">
+                                <span class="stat-label">心态</span>
+                                <div class="stat-bar"><div class="stat-fill" id="mood-bar" style="width: 80%"></div></div>
+                                <span class="stat-value" id="mood-value">80/100</span>
+                            </div>
+                            <div class="profile-bar-item">
+                                <span class="stat-label">内容质量</span>
+                                <div class="stat-bar"><div class="stat-fill stat-fill-blue" id="quality-bar" style="width: 20%"></div></div>
+                                <span class="stat-value" id="quality-value">20/100</span>
+                            </div>
+                            <div class="profile-bar-item">
+                                <span class="stat-label">人设契合</span>
+                                <div class="stat-bar"><div class="stat-fill stat-fill-blue" id="persona-bar" style="width: 20%"></div></div>
+                                <span class="stat-value" id="persona-value">20/100</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="action-panel">
+                        <h3>本月行动</h3>
+                        <p class="tip" id="action-limit-tip">本月行动次数：0/5</p>
+                        <button class="btn btn-platform-manage" id="platform-manage-btn">
+                            <div class="platform-manage-icon" id="platform-manage-icon">🎵</div>
+                            <div class="platform-manage-content">
+                                <div class="platform-manage-title" id="platform-manage-title">平台管理</div>
+                                <div class="platform-manage-subtitle" id="platform-manage-subtitle">切换平台 · 多开账号</div>
+                            </div>
+                            <div class="platform-manage-arrow">›</div>
+                        </button>
+                        <div id="action-list" class="action-list">
+                            <!-- 动态生成行动按钮 -->
+                        </div>
+                        <button class="btn btn-primary btn-wide" id="next-month-btn">结算本月</button>
+                    </div>
                 </div>
             </div>
 
-            <!-- 行动选择区 -->
-            <div class="action-panel">
-                <h3>本月行动</h3>
-                <p class="tip" id="action-limit-tip">本月行动次数：0/5</p>
-                
-                <!-- 助理消息按钮 -->
-                <button class="btn btn-assistant" id="message-btn">
-                    <div class="assistant-icon">📱</div>
-                    <div class="assistant-content">
-                        <div class="assistant-title">小助理消息</div>
-                        <div class="assistant-subtitle">查看商业邀约和合作（不消耗行动次数）</div>
-                    </div>
-                    <span class="message-badge-large" id="message-badge" style="display: none;">0</span>
+            <!-- 底部页签导航（小红书风格） -->
+            <nav class="bottom-tab-nav">
+                <button type="button" class="bottom-tab-item active" data-tab="tab-profile" aria-label="个人主页">
+                    <span class="bottom-tab-icon">👤</span>
+                    <span class="bottom-tab-label">个人主页</span>
                 </button>
-
-                <!-- 平台管理按钮 -->
-                <button class="btn btn-platform-manage" id="platform-manage-btn">
-                    <div class="platform-manage-icon" id="platform-manage-icon">🎵</div>
-                    <div class="platform-manage-content">
-                        <div class="platform-manage-title" id="platform-manage-title">平台管理</div>
-                        <div class="platform-manage-subtitle" id="platform-manage-subtitle">切换平台 · 多开账号</div>
-                    </div>
-                    <div class="platform-manage-arrow">›</div>
+                <button type="button" class="bottom-tab-item" data-tab="tab-messages" aria-label="消息">
+                    <span class="bottom-tab-icon">💬</span>
+                    <span class="bottom-tab-label">消息</span>
                 </button>
-                
-                <div id="action-list" class="action-list">
-                    <!-- 动态生成行动按钮 -->
-                </div>
-                <button class="btn btn-primary btn-wide" id="next-month-btn">结算本月</button>
-            </div>
-
-            <!-- 日志区 -->
-            <div class="log-panel">
-                <h3>事件日志</h3>
-                <div id="log-content" class="log-content">
-                    <p class="log-entry">游戏开始！</p>
-                </div>
-            </div>
+                <button type="button" class="bottom-tab-item" data-tab="tab-actions" aria-label="行动">
+                    <span class="bottom-tab-icon">⚡</span>
+                    <span class="bottom-tab-label">行动</span>
+                </button>
+            </nav>
         </div>
 
         <!-- 事件弹窗 -->
@@ -442,6 +504,26 @@
                 <div id="messages-list" class="messages-list">
                     <!-- 动态生成消息列表 -->
                 </div>
+            </div>
+        </div>
+
+        <!-- 评论与事件二级界面（事件中心） -->
+        <div id="events-panel-modal" class="modal">
+            <div class="modal-content events-panel-content">
+                <button class="modal-close" id="events-panel-close" aria-label="关闭">×</button>
+                <div class="events-panel-header">
+                    <h2 class="events-panel-title">💬 评论与事件</h2>
+                    <p class="events-panel-desc">选择一条待处理事件，查看详情并做出选择</p>
+                </div>
+                <div id="events-panel-list" class="events-panel-list">
+                    <!-- 动态填充事件卡片 -->
+                </div>
+                <div id="events-panel-empty" class="events-panel-empty" style="display: none;">
+                    <div class="events-panel-empty-icon">📭</div>
+                    <p id="events-panel-empty-text" class="events-panel-empty-text">暂无待处理事件</p>
+                    <p id="events-panel-empty-hint" class="events-panel-empty-hint">事件会在执行行动、月末结算等时机自动触发，届时会出现在这里。</p>
+                </div>
+                <button type="button" class="btn btn-secondary btn-wide" id="events-panel-close-btn">返回</button>
             </div>
         </div>
 

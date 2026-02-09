@@ -44,8 +44,14 @@ class UIController {
         bind('message-btn', 'click', () => this.showMessages());
         bind('messages-close-btn', 'click', () => this.closeMessages());
         bind('platform-manage-btn', 'click', () => this.showPlatformManageMenu());
+        bind('trigger-event-comment-btn', 'click', () => this.openEventsPanel());
+        bind('events-panel-close', 'click', () => this.closeEventsPanel());
+        bind('events-panel-close-btn', 'click', () => this.closeEventsPanel());
         document.querySelectorAll('.help-tab').forEach(tab => {
             tab.addEventListener('click', () => this.switchHelpTab(tab.dataset.tab));
+        });
+        document.querySelectorAll('.bottom-tab-item').forEach(item => {
+            item.addEventListener('click', () => this.switchMainTab(item.dataset.tab));
         });
         
         // 初始化游戏
@@ -63,6 +69,16 @@ class UIController {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.getElementById(screenId).classList.add('active');
         this.currentScreen = screenId;
+    }
+
+    // 切换主游戏页签（个人主页 / 消息 / 行动）
+    switchMainTab(tabId) {
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.bottom-tab-item').forEach(b => b.classList.remove('active'));
+        const panel = document.getElementById(tabId);
+        const btn = document.querySelector(`.bottom-tab-item[data-tab="${tabId}"]`);
+        if (panel) panel.classList.add('active');
+        if (btn) btn.classList.add('active');
     }
 
     // 验证名字
@@ -457,19 +473,26 @@ class UIController {
             actionTip.classList.add('action-tip');
         }
 
+        // 更新「新增关注」本月新增粉丝数
+        this.updateMonthlyFanGain();
+
         // 更新角色属性显示
         this.renderAttributeDisplay();
 
-        // 更新头像显示
+        // 更新头像显示（顶部栏 + 个人主页）
         const avatarDisplay = document.getElementById('avatar-display');
-        if (avatarDisplay) {
-            const gender = state.gender;
-            const list = GameConfig.avatarOptions?.[gender] || [];
-            const current = list.find(item => item.id === state.avatarId);
-            if (current) {
-                avatarDisplay.innerHTML = current.svg;
-            }
+        const profileAvatar = document.getElementById('profile-avatar');
+        const profileName = document.getElementById('profile-name');
+        const profileCategory = document.getElementById('profile-category');
+        const gender = state.gender;
+        const list = GameConfig.avatarOptions?.[gender] || [];
+        const current = list.find(item => item.id === state.avatarId);
+        if (current) {
+            if (avatarDisplay) avatarDisplay.innerHTML = current.svg;
+            if (profileAvatar) profileAvatar.innerHTML = current.svg;
         }
+        if (profileName) profileName.textContent = state.influencerName;
+        if (profileCategory) profileCategory.textContent = state.category ? state.category.name : '—';
 
         // 精力归零触发猝死
         if (state.energy <= 0 && !state.isGameOver) {
@@ -612,23 +635,76 @@ class UIController {
         }
     }
 
-    // 触发事件
-    triggerEvent() {
-        console.log('触发随机事件');
-        const event = game.getEventForCurrentMonth();
-        console.log('事件内容:', event);
-        if (event) {
-            // 检查事件是否应该作为助理消息
-            if (event.isMessage) {
-                game.addMessage(event, event.isUrgent);
-                this.updateMessageBadge();
-                game.addLog(`📱 收到助理消息：${event.title}`, 'normal');
-                this.updateLog();
-            } else {
-                this.showEventModal(event);
-            }
+    // 更新「新增关注」显示：本月新增粉丝数
+    updateMonthlyFanGain() {
+        const el = document.getElementById('monthly-fan-gain');
+        if (!el) return;
+        const state = game.getState();
+        const lastFans = state.lastMonthStats?.fans ?? state.fans;
+        const gain = state.fans - lastFans;
+        el.textContent = (gain >= 0 ? '+' : '') + gain.toLocaleString();
+        el.classList.toggle('positive', gain > 0);
+    }
+
+    // 打开评论与事件二级界面：只展示「已触发、待处理」的事件列表（由行动、月末等自动触发），无主动抽取。
+    openEventsPanel() {
+        const listEl = document.getElementById('events-panel-list');
+        const emptyEl = document.getElementById('events-panel-empty');
+        if (!listEl || !emptyEl) return;
+
+        const pending = game.getPendingEvents();
+        listEl.innerHTML = '';
+
+        if (pending.length === 0) {
+            emptyEl.style.display = 'block';
+            document.getElementById('events-panel-empty-text').textContent = '暂无待处理事件';
+            document.getElementById('events-panel-empty-hint').textContent = '事件会在执行行动、月末结算等时机自动触发，届时会出现在这里。';
         } else {
-            console.error('事件生成失败');
+            emptyEl.style.display = 'none';
+            pending.forEach(({ id, event, time }) => {
+                const card = document.createElement('button');
+                card.type = 'button';
+                card.className = 'events-panel-card';
+                const preview = (event.messagePreview || event.description || event.title).replace(/^📱\s*/, '').slice(0, 60);
+                card.innerHTML = `
+                    <div class="events-panel-card-title">${event.title}</div>
+                    <div class="events-panel-card-preview">${preview}${preview.length >= 60 ? '…' : ''}</div>
+                    <span class="events-panel-card-tag">${time}</span>
+                `;
+                card.addEventListener('click', () => {
+                    game.removePendingEvent(id);
+                    this.closeEventsPanel();
+                    this.showEventModal(event);
+                    this.updateMessageBadge();
+                    this.updateLog();
+                });
+                listEl.appendChild(card);
+            });
+        }
+
+        document.getElementById('events-panel-modal').classList.add('active');
+    }
+
+    // 关闭评论与事件二级界面
+    closeEventsPanel() {
+        this.pendingPanelEvent = null;
+        document.getElementById('events-panel-modal').classList.remove('active');
+    }
+
+    // 触发事件：按设计每种事件有各自触发方式（行动后、月末、月初等）。触发后：助理类进消息，其余进「评论与事件」待处理列表。
+    triggerEvent() {
+        const event = game.getEventForCurrentMonth();
+        if (!event) return;
+        if (event.isMessage) {
+            game.addMessage(event, event.isUrgent);
+            this.updateMessageBadge();
+            game.addLog(`📱 收到助理消息：${event.title}`, 'normal');
+            this.updateLog();
+        } else {
+            game.addPendingEvent(event);
+            this.updateMessageBadge();
+            game.addLog(`💬 新事件待处理：${event.title}`, 'normal');
+            this.updateLog();
         }
     }
 
@@ -853,6 +929,7 @@ class UIController {
         
         const fansChange = monthlyChange && typeof monthlyChange.fans === 'number' ? monthlyChange.fans : (state.fans - (state.lastMonthStats?.fans ?? 0));
         const savingsChange = monthlyChange && typeof monthlyChange.savings === 'number' ? monthlyChange.savings : (state.savings - (state.lastMonthStats?.savings ?? state.savings));
+        const profitChange = monthlyChange && typeof monthlyChange.profit === 'number' ? monthlyChange.profit : 0;
         
         // 格式化变化数值
         const formatChange = (value, prefix = '') => {
@@ -867,6 +944,11 @@ class UIController {
 
         content.innerHTML = `
             <div class="monthly-summary">
+                <div class="monthly-card">
+                    <div class="monthly-card-label">本月收益</div>
+                    <div class="value ${profitChange >= 0 ? 'positive' : 'negative'}">¥${profitChange.toLocaleString()}</div>
+                    <div class="monthly-change">${profitChange >= 0 ? '本月赚取' : '本月亏损'}</div>
+                </div>
                 <div class="monthly-card">
                     <div class="monthly-card-label">本月粉丝</div>
                     <div class="value">${state.fans.toLocaleString()}</div>
@@ -1114,18 +1196,22 @@ class UIController {
                     ? '<span class="message-tag onboarding-tag">平台引导</span>' 
                     : (message.isUrgent ? '<span class="message-tag urgent-tag">紧急</span>' : '');
                 
+                const displayTitle = message.event.messagePreview || message.event.title;
+                const previewText = message.event.messagePreview
+                    ? '点击查看详情并做出选择'
+                    : (message.event.description.substring(0, 80) + (message.event.description.length > 80 ? '...' : ''));
                 item.innerHTML = `
                     <div class="message-header">
                         <div class="message-title">
                             ${tagHtml}
-                            ${message.event.title}
+                            ${displayTitle}
                             ${unreadBadge}
                         </div>
                         <div class="message-time">${message.time}</div>
                     </div>
-                    <div class="message-preview">${message.event.description.substring(0, 80)}...</div>
+                    <div class="message-preview">${previewText}</div>
                     <div class="message-action">
-                        <button class="message-btn" data-message-id="${message.id}">${isOnboarding ? '查看引导' : '查看详情'}</button>
+                        <button class="message-btn" data-message-id="${message.id}">${isOnboarding ? '查看引导' : (message.event.messagePreview ? '去处理' : '查看详情')}</button>
                     </div>
                 `;
                 
@@ -1157,16 +1243,33 @@ class UIController {
         this.updateMessageBadge();
     }
 
-    // 更新消息红点
+    // 更新消息红点（小助理未读 + 评论与事件待处理数 + 底部消息页签角标）
     updateMessageBadge() {
         const badge = document.getElementById('message-badge');
-        const count = game.getUnreadMessageCount();
+        const eventsBadge = document.getElementById('events-pending-badge');
+        const messageTabBtn = document.querySelector('.bottom-tab-item[data-tab="tab-messages"]');
+        const unreadCount = game.getUnreadMessageCount();
+        const pendingCount = game.getPendingEvents().length;
         
-        if (count > 0) {
-            badge.textContent = count;
-            badge.style.display = 'block';
-        } else {
-            badge.style.display = 'none';
+        if (badge) {
+            if (unreadCount > 0) {
+                badge.textContent = unreadCount;
+                badge.style.display = 'block';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+        if (eventsBadge) {
+            if (pendingCount > 0) {
+                eventsBadge.textContent = pendingCount;
+                eventsBadge.style.display = 'block';
+            } else {
+                eventsBadge.style.display = 'none';
+            }
+        }
+        if (messageTabBtn) {
+            if (unreadCount > 0 || pendingCount > 0) messageTabBtn.classList.add('has-badge');
+            else messageTabBtn.classList.remove('has-badge');
         }
     }
 
