@@ -39,6 +39,11 @@ body {
     pointer-events: auto;
 }
 
+/* 创角阶段隐藏主游戏界面，避免未命名/空白账号露在下方 */
+#main-game-screen.screen:not(.active) {
+    display: none !important;
+}
+
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
@@ -752,9 +757,19 @@ body {
     margin-top: 16px;
 }
 
-/* 个人主页假推送/热搜区域 */
+/* 个人主页发现/热搜区域（明确与上方账号卡区分） */
 .profile-feed-section {
-    margin-top: 20px;
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.profile-feed-section-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #718096;
+    margin: 0 0 12px 0;
+    letter-spacing: 0.5px;
 }
 
 .feed-block {
