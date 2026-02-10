@@ -403,12 +403,12 @@ body {
     background: white;
     border: 2px solid #e0e0e0;
     border-radius: 15px;
-    padding: 20px;
+    padding: 16px;
     cursor: pointer;
     transition: all 0.3s;
     display: flex;
     flex-direction: column;
-    height: 320px;
+    height: auto;
 }
 
 .category-card:hover {
@@ -424,19 +424,6 @@ body {
     flex-shrink: 0;
 }
 
-.category-icon {
-    width: 50px;
-    height: 50px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    margin-right: 15px;
-    flex-shrink: 0;
-}
-
 .category-name {
     font-size: 20px;
     font-weight: bold;
@@ -445,45 +432,13 @@ body {
 
 .category-details {
     flex: 1;
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding-right: 8px;
-    margin-right: -8px;
+    overflow: visible;
+    padding-right: 0;
+    margin-right: 0;
     position: relative;
 }
 
-.category-details::after {
-    content: '⋯';
-    position: sticky;
-    bottom: -2px;
-    left: 0;
-    right: 0;
-    background: linear-gradient(to bottom, transparent 0%, white 40%, white 100%);
-    text-align: center;
-    font-size: 18px;
-    color: #ccc;
-    padding: 12px 0 4px;
-    pointer-events: none;
-    letter-spacing: 4px;
-}
-
-.category-details::-webkit-scrollbar {
-    width: 6px;
-}
-
-.category-details::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 3px;
-}
-
-.category-details::-webkit-scrollbar-thumb {
-    background: #667eea;
-    border-radius: 3px;
-}
-
-.category-details::-webkit-scrollbar-thumb:hover {
-    background: #5568d3;
-}
+/* 取消类别卡片内部滚动条，移动端减少“套娃滚动” */
 
 /* 平台卡片 */
 .platform-card {

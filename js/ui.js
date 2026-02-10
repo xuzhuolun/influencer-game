@@ -292,7 +292,6 @@ class UIController {
             card.className = 'category-card';
             card.innerHTML = `
                 <div class="category-header">
-                    <div class="category-icon">${category.icon}</div>
                     <div class="category-name">${category.name}</div>
                 </div>
                 <div class="category-details">
