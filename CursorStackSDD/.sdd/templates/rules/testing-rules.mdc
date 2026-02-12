@@ -1,0 +1,320 @@
+---
+alwaysApply: true
+---
+
+# 测试规则
+
+适用于所有语言和框架的测试编写和维护最佳实践。
+
+## 核心原则
+
+- **测试行为:** 测试代码做什么，而非如何做
+- **DRY:** 提取测试工具和辅助函数
+- **KISS:** 保持测试简单可读
+- **模块化:** 每个行为/需求一个测试
+
+---
+
+## 测试结构
+
+### AAA 模式
+
+**准备、执行、断言:**
+```javascript
+// ✅ 正确: AAA 模式
+test('应该正确计算总价', () => {
+  // 准备 (Arrange)
+  const items = [
+    { price: 10, quantity: 2 },
+    { price: 5, quantity: 3 }
+  ];
+  
+  // 执行 (Act)
+  const total = calculateTotal(items);
+  
+  // 断言 (Assert)
+  expect(total).toBe(35);
+});
+```
+
+### 测试命名
+
+**描述性的测试名称:**
+```javascript
+// ✅ 正确: 描述性名称
+test('当用户未找到时应返回 null')
+test('当输入无效时应抛出错误')
+test('应为高级用户计算折扣')
+
+// ❌ 错误: 模糊的名称
+test('test calculate')
+test('user test')
+test('works')
+```
+
+---
+
+## 测试组织
+
+### 分组相关测试
+
+**使用 describe 块:**
+```javascript
+// ✅ 正确: 分组测试
+describe('UserService', () => {
+  describe('getUser', () => {
+    test('找到时应返回用户', () => { });
+    test('未找到时应返回 null', () => { });
+  });
+  
+  describe('createUser', () => {
+    test('有效数据时应创建用户', () => { });
+    test('无效数据时应抛出错误', () => { });
+  });
+});
+```
+
+### 每个行为一个测试
+
+**每个测试只测试一件事:**
+```javascript
+// ✅ 正确: 每个行为一个测试
+test('找到时应返回用户', () => {
+  const user = getUser(1);
+  expect(user).toBeDefined();
+});
+
+test('未找到时应返回 null', () => {
+  const user = getUser(999);
+  expect(user).toBeNull();
+});
+
+// ❌ 错误: 多个行为
+test('应处理用户操作', () => {
+  expect(getUser(1)).toBeDefined();
+  expect(getUser(999)).toBeNull();
+  expect(createUser({})).toThrow();
+});
+```
+
+---
+
+## 测试数据
+
+### 测试夹具
+
+**使用夹具作为测试数据:**
+```javascript
+// ✅ 正确: 测试夹具
+const createMockUser = (overrides = {}) => ({
+  id: 1,
+  name: 'John Doe',
+  email: 'john@example.com',
+  ...overrides
+});
+
+test('应更新用户', () => {
+  const user = createMockUser({ name: 'Jane Doe' });
+  // ...
+});
+```
+
+### 隔离的测试数据
+
+**不要共享可变状态:**
+```javascript
+// ❌ 错误: 共享状态
+const user = { id: 1, name: 'John' };
+
+test('测试 1', () => {
+  user.name = 'Jane'; // 影响其他测试
+});
+
+// ✅ 正确: 隔离的数据
+test('测试 1', () => {
+  const user = { id: 1, name: 'John' };
+  user.name = 'Jane'; // 只影响这个测试
+});
+```
+
+---
+
+## 断言
+
+### 清晰的断言
+
+**使用描述性断言:**
+```javascript
+// ✅ 正确: 清晰的断言
+expect(result).toBe(expected);
+expect(array).toHaveLength(3);
+expect(user).toHaveProperty('email');
+expect(function).toThrow('Error message');
+
+// ❌ 错误: 不清晰的断言
+expect(result).toBeTruthy();
+expect(array.length).toBe(3);
+```
+
+### 测试边界情况
+
+**测试边界和边缘情况:**
+```javascript
+// ✅ 正确: 边界情况
+test('应处理空数组', () => {
+  expect(calculateTotal([])).toBe(0);
+});
+
+test('应处理零值', () => {
+  expect(calculateTotal([{ price: 0, quantity: 1 }])).toBe(0);
+});
+
+test('应处理负数', () => {
+  expect(() => calculateTotal([{ price: -10, quantity: 1 }]))
+    .toThrow();
+});
+```
+
+---
+
+## 模拟 (Mocking)
+
+### 模拟外部依赖
+
+**模拟 API 调用、数据库等:**
+```javascript
+// ✅ 正确: 模拟外部依赖
+jest.mock('./api');
+
+test('应获取用户', async () => {
+  const mockFetch = jest.fn().mockResolvedValue({ id: 1, name: 'John' });
+  api.fetchUser = mockFetch;
+  
+  const user = await getUser(1);
+  
+  expect(mockFetch).toHaveBeenCalledWith(1);
+  expect(user.name).toBe('John');
+});
+```
+
+### 不要过度模拟
+
+**尽可能测试真实行为:**
+```javascript
+// ❌ 错误: 过度模拟
+test('应计算总价', () => {
+  const mockAdd = jest.fn();
+  mockAdd.mockReturnValue(10);
+  // 测试的是模拟，而非真实代码
+
+// ✅ 正确: 测试真实代码
+test('应计算总价', () => {
+  const total = calculateTotal(items);
+  expect(total).toBe(35);
+});
+```
+
+---
+
+## 测试覆盖率
+
+### 覆盖关键路径
+
+**测试重要功能:**
+- 正常路径 (Happy paths)
+- 错误情况
+- 边界情况
+- 边界条件
+
+### 不要执着于 100%
+
+**专注于有意义的覆盖:**
+- 关键业务逻辑: 高覆盖率
+- 简单工具函数: 基本覆盖
+- 生成的代码: 可以跳过
+
+---
+
+## 集成测试
+
+### 测试组件集成
+
+**测试组件协同工作:**
+```javascript
+// ✅ 正确: 集成测试
+test('应提交表单并更新用户', async () => {
+  render(<UserForm userId={1} />);
+  
+  fireEvent.change(screen.getByLabelText('Name'), {
+    target: { value: 'Jane' }
+  });
+  fireEvent.click(screen.getByText('Save'));
+  
+  await waitFor(() => {
+    expect(screen.getByText('User updated')).toBeInTheDocument();
+  });
+});
+```
+
+---
+
+## 端到端测试 (E2E)
+
+### 测试用户流程
+
+**测试完整的用户旅程:**
+```javascript
+// ✅ 正确: E2E 测试
+test('用户可以完成结账流程', async () => {
+  await page.goto('/products');
+  await page.click('[data-testid="product-1"]');
+  await page.click('[data-testid="add-to-cart"]');
+  await page.goto('/cart');
+  await page.click('[data-testid="checkout"]');
+  await page.fill('[name="email"]', 'user@example.com');
+  await page.click('[data-testid="submit"]');
+  
+  await expect(page.locator('[data-testid="success"]')).toBeVisible();
+});
+```
+
+---
+
+## 测试性能
+
+### 保持测试快速
+
+**保持测试快速:**
+- 对慢操作使用模拟
+- 避免真实网络调用
+- 使用内存数据库
+- 尽可能并行化
+
+### 测试隔离
+
+**测试应该是独立的:**
+- 测试之间没有共享状态
+- 每个测试可以单独运行
+- 顺序不应该影响结果
+- 测试后清理
+
+---
+
+## 最佳实践总结
+
+1. **AAA 模式** - 准备、执行、断言
+2. **描述性名称** - 清晰的测试名称
+3. **单一行为** - 每个行为一个测试
+4. **测试夹具** - 可复用的测试数据
+5. **隔离数据** - 不共享可变状态
+6. **清晰断言** - 描述性的期望
+7. **边界情况** - 测试边界
+8. **明智模拟** - 模拟外部，测试真实
+9. **有意义覆盖** - 专注关键路径
+10. **快速隔离** - 独立、快速的测试
+
+---
+
+**生成方式:** `/generate-rules` 命令  
+**最后更新:** {{DATE}}  
+**项目复杂度:** {{COMPLEXITY}}

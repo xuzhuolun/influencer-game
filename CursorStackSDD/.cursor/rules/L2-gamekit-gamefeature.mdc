@@ -1,0 +1,193 @@
+---
+description: "[L2-GameKit] GameFeature 开发规范 - 模块化功能插件开发"
+globs:
+  - "**/GameFeatures/**/*"
+  - "**/GameFeature_*/**/*"
+alwaysApply: true
+tags: gamekit, gamefeature, constraint, pdca
+level: L2
+scope: gamekit-framework
+---
+
+# [L2-GameKit] GameFeature 开发规范
+
+> **层级**: L2 (子系统规则)
+> **类型**: `constraint` | **适用版本**: UE5.7
+> **适用范围**: `gamekit-framework` - 使用 GameKitCore 框架的项目
+
+---
+
+## 1. GameFeature 核心概念
+
+### 什么是 GameFeature？
+- **模块化功能单元**：将游戏功能封装为独立插件
+- **动态加载/卸载**：运行时按需激活
+- **Experience 驱动**：通过 Experience 配置自动激活
+
+```
+Experience (定义"游戏体验")
+    │
+    ▼
+GameFeatureData (列出需要的功能)
+    │
+    ▼
+GameFeatureAction (执行具体操作)
+    │
+    ▼
+功能激活（添加组件、UI、能力等）
+```
+
+---
+
+## 2. 目录结构规范
+
+### [Constraint] 插件目录结构
+
+```
+Plugins/GameFeatures/
+└── GameFeature_[功能名]/
+    ├── GameFeature_[功能名].uplugin
+    ├── Content/
+    │   └── [功能名]_GameFeatureData.uasset
+    ├── Source/
+    │   └── GameFeature_[功能名]/
+    │       ├── GameFeature_[功能名].Build.cs
+    │       ├── Public/
+    │       └── Private/
+    └── README.md
+```
+
+### [Constraint] 命名规范
+*   **[Constraint]** 插件名：`GameFeature_[功能名]`（如 `GameFeature_Combat`）
+*   **[Constraint]** GameFeatureData 资产名：`[功能名]_GameFeatureData`
+
+---
+
+## 3. 生命周期闭环 🔄
+
+### [Constraint] 激活/停用闭环原则
+
+```
+激活流程：
+Experience 加载 → GameFeature 激活 → 引用计数 +1 → 执行 Actions
+
+停用流程：
+Experience 卸载 → 请求停用 → 引用计数 -1 → 归零时真正停用
+```
+
+### [Constraint] 引用计数管理
+*   **[Constraint]** 激活时：引用计数 +1
+*   **[Constraint]** 停用时：引用计数 -1，归零才真正 Deactivate
+*   **[Constraint]** EndPlay 必须调用停用逻辑
+
+```cpp
+// ✅ 正确：完整闭环
+void UGameKitExperienceManagerComponent::OnGameFeaturePluginLoadComplete(...)
+{
+    // 激活时记录
+    NumGameFeaturePluginsLoading--;
+    NotifyOfPluginActivation(PluginURL);  // 计数 +1
+    GameFeaturePluginURLs.Add(PluginURL);
+}
+
+void UGameKitExperienceManagerComponent::EndPlay(...)
+{
+    // 停用时清理
+    for (const FString& PluginURL : GameFeaturePluginURLs)
+    {
+        if (RequestToDeactivatePlugin(PluginURL))  // 计数 -1
+        {
+            UGameFeaturesSubsystem::Get().DeactivateGameFeaturePlugin(PluginURL);
+        }
+    }
+}
+
+// ❌ 错误：只激活不停用
+void BadExample()
+{
+    UGameFeaturesSubsystem::Get().LoadAndActivateGameFeaturePlugin(URL, ...);
+    // EndPlay 里没有 Deactivate → PIE 状态残留
+}
+```
+
+---
+
+## 4. GameFeatureAction 规范
+
+### [Constraint] Action 类型
+*   **AddComponents**: 添加组件到 Actor
+*   **AddWidgets**: 添加 UI 到布局
+*   **AddAbilities**: 添加 GAS 能力
+*   **自定义 Action**: 继承 `UGameFeatureAction_WorldActionBase`
+
+### [Constraint] Action 实现规则
+*   **[Constraint]** 所有添加操作必须有对应的移除逻辑
+*   **[Constraint]** 在 `OnGameFeatureDeactivating` 中清理资源
+
+```cpp
+// ✅ 正确：完整的 Action 实现
+class UGameKitAction_AddWidgets : public UGameFeatureAction_WorldActionBase
+{
+    virtual void OnGameFeatureActivating(FGameFeatureActivatingContext& Context) override
+    {
+        // 添加 Widget
+        AddedWidgets.Add(CreatedWidget);
+    }
+    
+    virtual void OnGameFeatureDeactivating(FGameFeatureDeactivatingContext& Context) override
+    {
+        // 移除 Widget
+        for (auto Widget : AddedWidgets)
+        {
+            Widget->RemoveFromParent();
+        }
+        AddedWidgets.Empty();
+    }
+};
+```
+
+---
+
+## 5. 依赖规则
+
+### [Constraint] GameFeature 依赖约束
+*   **[Constraint]** GameFeature 可以依赖 GameKitCore ✅
+*   **[Constraint]** GameFeature 之间不应相互依赖 ❌
+*   **[Constraint]** 其他插件不应依赖 GameFeature ❌
+
+```
+GameFeature_Combat  →  GameKitCore       ✅
+GameFeature_Combat  →  GameFeature_UI    ❌
+MyProjectModule     →  GameFeature_Combat ❌
+```
+
+---
+
+## 6. PIE 多实例支持
+
+### [Constraint] PIE 兼容性
+*   **[Constraint]** 使用引用计数管理 GameFeature 状态
+*   **[Constraint]** 避免使用 static 变量存储状态
+*   **[Constraint]** EndPlay 时正确清理
+
+---
+
+## ✅ 检查清单
+
+- [ ] 插件目录结构符合规范
+- [ ] 命名符合 `GameFeature_[功能名]` 格式
+- [ ] 激活/停用闭环完整
+- [ ] Action 有对应的清理逻辑
+- [ ] 无 GameFeature 间相互依赖
+- [ ] PIE 多实例测试通过
+
+---
+
+**记住**：
+- 🎯 **闭环原则**：激活必有停用
+- 🎯 **引用计数**：归零才真正停用
+- 🎯 **无相互依赖**：GameFeature 之间独立
+
+---
+
+**层级**: L2-GameKit | **最后更新**: 2026年2月

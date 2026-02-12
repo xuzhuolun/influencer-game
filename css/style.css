@@ -1,4 +1,4 @@
-/* 全局样式 */
+/* ==================== 全局样式 ==================== */
 * {
     margin: 0;
     padding: 0;
@@ -25,7 +25,7 @@ body {
     overflow: hidden;
 }
 
-/* 屏幕切换 */
+/* ==================== 屏幕切换（创角三屏 + 主游戏） ==================== */
 .screen {
     display: none;
     padding: clamp(20px, 4vw, 40px);
@@ -375,7 +375,7 @@ body {
     margin: 10px 0;
 }
 
-/* 类别选择 */
+/* ==================== 创角-类别选择 ==================== */
 #category-screen .content-box {
     max-width: 1000px;
 }
@@ -387,7 +387,7 @@ body {
     margin-top: 30px;
 }
 
-/* 平台选择 */
+/* ==================== 创角-平台选择 ==================== */
 #platform-screen .content-box {
     max-width: 1200px;
 }
@@ -557,7 +557,7 @@ body {
     margin-bottom: 4px;
 }
 
-/* 主游戏界面（分页签布局） */
+/* ==================== 主游戏界面（分页签布局） ==================== */
 #main-game-screen.main-game-with-tabs {
     padding: 0;
     display: flex;
@@ -600,7 +600,7 @@ body {
     min-height: 0;
 }
 
-/* 个人主页页签（小红书风格） */
+/* ---------- 主游戏-Tab：个人主页 ---------- */
 .profile-header-card {
     background: linear-gradient(180deg, rgba(102, 126, 234, 0.06) 0%, #f8fafc 80px);
     border-radius: 16px;
@@ -783,7 +783,7 @@ body {
     font-size: 13px;
 }
 
-/* 行动页签：属性块置顶 */
+/* ---------- 主游戏-Tab：行动 ---------- */
 .action-attributes-block {
     background: #f8fafc;
     border: 1px solid #e2e8f0;
@@ -835,7 +835,7 @@ body {
     color: #2d3748;
 }
 
-/* 消息页签（小红书风格） */
+/* ---------- 主游戏-Tab：消息 ---------- */
 .messages-page-header {
     margin-bottom: 16px;
 }
@@ -1387,7 +1387,7 @@ body {
     font-weight: bold;
 }
 
-/* 弹窗样式 */
+/* ==================== 全局弹窗 ==================== */
 .modal {
     display: none;
     position: fixed;
@@ -1813,8 +1813,69 @@ body {
     font-size: clamp(13px, 2vw, 15px);
 }
 
-/* 响应式布局 */
+/* ========== 响应式布局：移动端适配（参照互联网大厂模拟器） ========== */
 @media (max-width: 768px) {
+    /* 全局与容器 */
+    body {
+        padding: 12px 10px;
+    }
+    #game-container {
+        min-height: 100vh;
+        min-height: 100dvh;
+        border-radius: 12px;
+    }
+    .screen {
+        padding: clamp(12px, 3vw, 24px);
+    }
+    .content-box {
+        padding: 24px 16px;
+        max-width: 100%;
+    }
+    /* 创角-起名：避免 300px 最小宽度导致横向滚动 */
+    #influencer-name {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+    }
+    /* 创角-触控热区 ≥44px */
+    .btn {
+        min-height: 44px;
+        min-width: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .btn:not(.btn-inline) {
+        display: flex;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .attribute-panel .roll-attr-first {
+        min-height: 44px;
+    }
+    #confirm-name-btn {
+        min-height: 48px;
+    }
+    .gender-item {
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        padding: 8px 16px;
+        cursor: pointer;
+    }
+    .gender-item input {
+        margin-right: 6px;
+    }
+    .avatar-item {
+        min-height: 44px;
+        min-width: 44px;
+        padding: 10px;
+    }
+    .attribute-list {
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    }
+
     .stat-item {
         grid-template-columns: 70px 1fr 80px;
         gap: 8px;
@@ -1906,6 +1967,85 @@ body {
 
     .platform-manage-subtitle {
         font-size: 10px;
+    }
+
+    /* 主游戏区与底部导航：触控热区与安全区 */
+    .status-bar-compact .btn-small {
+        min-height: 44px;
+        min-width: 44px;
+        padding: 10px 16px;
+    }
+    .bottom-tab-nav {
+        height: 56px;
+        padding-bottom: env(safe-area-inset-bottom, 0);
+        min-height: calc(56px + env(safe-area-inset-bottom, 0));
+    }
+    .bottom-tab-item {
+        min-height: 44px;
+        min-width: 44px;
+        padding: 8px 12px;
+    }
+    .tab-panel {
+        padding-bottom: calc(80px + env(safe-area-inset-bottom, 0));
+    }
+    .tab-panel.tab-panel-fixed {
+        padding-bottom: calc(72px + env(safe-area-inset-bottom, 0));
+    }
+    #platform-manage-btn {
+        min-height: 44px;
+    }
+    #next-month-btn {
+        min-height: 48px;
+    }
+    .message-category-card {
+        min-height: 44px;
+    }
+    .action-btn {
+        min-height: 44px;
+        padding: 14px 16px;
+    }
+
+    /* 弹窗：小屏无横向溢出、关闭易点 */
+    .modal-content {
+        padding: 24px 16px;
+        max-width: 95%;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .modal-close {
+        min-width: 44px;
+        min-height: 44px;
+        padding: 8px;
+        margin: -8px;
+    }
+}
+
+/* 480px：创角单列、行动列表单列 */
+@media (max-width: 480px) {
+    .attribute-list {
+        grid-template-columns: 1fr;
+    }
+    .avatar-list {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .content-box {
+        padding: 20px 12px;
+    }
+}
+
+/* 320px：最小视口兜底 */
+@media (max-width: 320px) {
+    body {
+        padding: 8px 6px;
+    }
+    .content-box {
+        padding: 16px 10px;
+    }
+    #influencer-name {
+        font-size: 16px; /* 避免 iOS 缩放 */
+    }
+    .bottom-tab-item .bottom-tab-label {
+        font-size: 11px;
     }
 }
 

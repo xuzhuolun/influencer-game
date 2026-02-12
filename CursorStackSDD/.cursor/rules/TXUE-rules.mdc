@@ -1,0 +1,164 @@
+---
+description: "[TXUE] 通用可复用组件仓库规范 - 目录结构、代码规范、插件开发流程"
+globs:
+  - "**/*.cpp"
+  - "**/*.h"
+  - "**/*.cs"
+  - "**/*.uplugin"
+  - "**/*.uproject"
+alwaysApply: true
+tags: txue, constraint, workflow
+level: L1
+---
+
+# [TXUE] 通用可复用组件仓库规范
+
+> **层级**: L1 (通用工程规则)
+> **类型**: `constraint` + `workflow` | **最低兼容**: UE5.7
+
+---
+
+## 1. 仓库定位
+
+### [Constraint] 核心定位
+*   **[Constraint]** TXUE 是**通用可复用组件仓库**，用于提取和管理可跨项目复用的功能
+*   **[Constraint]** 所有代码必须**独立于具体项目**（如 BBC），不依赖项目特定代码
+*   **[Constraint]** 代码可直接复制到其他 UE5.7+ 项目使用
+
+---
+
+## 2. 插件层级架构
+
+### [Constraint] 层级定义
+
+```
+┌─────────────────────────────────────────┐
+│  具体项目代码（MyProject Module）        │  ← 项目特定，可改名
+├─────────────────────────────────────────┤
+│  GameKitCore                            │  ← 业务核心（框架顶层）
+├─────────────────────────────────────────┤
+│  CommonGame / CommonUser / UIExtension  │  ← 通用游戏框架
+├─────────────────────────────────────────┤
+│  ModularGameplayActors / AsyncMixin     │  ← 模块化基础
+│  GameplayMessageRouter                  │
+├─────────────────────────────────────────┤
+│  UE5 Engine                             │  ← 引擎
+└─────────────────────────────────────────┘
+```
+
+### [Constraint] 层级职责
+
+| 层级 | 插件 | 职责 |
+|---|---|---|
+| **业务核心** | GameKitCore | 业务基类、通用组件、接口定义 |
+| **通用框架** | CommonGame, CommonUser, UIExtension | UI 框架、用户管理、扩展点 |
+| **模块化基础** | ModularGameplayActors, AsyncMixin, GameplayMessageRouter | 角色基类、异步加载、消息路由 |
+
+---
+
+## 3. 目录结构规范
+
+### [Constraint] 顶层目录结构
+
+```
+TXUE/
+├── .cursor/rules/        # TXUE 专属规则
+├── txueinfra/            # 基础设施（独立 Git 仓库）
+│   ├── build.bat         # 关闭进程 + 编译
+│   ├── buildAndOpen.bat  # 关闭进程 + 编译 + 打开编辑器
+│   ├── buildOnly.bat     # 仅编译
+│   └── TXUEDemo/         # 示例工程（插件载体）
+│       └── Plugins/      # 可复用插件目录
+│           └── README.md # 插件使用指南（必须维护）
+└── Doc/                  # TXUE 文档（可选）
+```
+
+### [Constraint] 插件目录结构
+
+```
+TXUEDemo/Plugins/
+└── [PluginName]/
+    ├── [PluginName].uplugin
+    ├── Source/
+    │   └── [ModuleName]/
+    │       ├── [ModuleName].Build.cs
+    │       ├── Public/
+    │       └── Private/
+    ├── Content/           # 插件资源（可选）
+    └── README.md          # 插件说明（必须）
+```
+
+---
+
+## 4. UE5.7 代码规范
+
+### [Constraint] Target.cs 配置标准
+*   **[Constraint]** `DefaultBuildSettings = BuildSettingsVersion.V6`
+*   **[Constraint]** `IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_7`
+
+### [Constraint] Build.cs 配置标准
+*   **[Constraint]** `CppStandard = CppStandardVersion.Cpp20`
+*   **[Constraint]** `PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs`
+
+### [Constraint] 模块命名
+*   **[Constraint]** 业务核心插件命名：`GameKit[功能名]`（如 `GameKitCore`）
+*   **[Constraint]** 工具类插件命名：`TXUE[功能名]`（如 `TXUEDebugger`）
+*   **[Constraint]** 避免与引擎或常见插件命名冲突
+
+### [Constraint] 依赖管理
+*   **[Constraint]** 公共依赖仅限引擎核心模块：`Core`, `CoreUObject`, `Engine`, `InputCore`
+*   **[Constraint]** 禁止依赖项目特定模块
+*   **[Constraint]** 可依赖其他 TXUE 插件，但需在 README 中说明
+
+---
+
+## 5. 构建脚本规范
+
+### [Constraint] 脚本约束
+*   **[Constraint]** 只支持 UE5.7（最低兼容版本）
+*   **[Constraint]** 使用相对路径，禁止硬编码绝对路径
+*   **[Constraint]** 构建脚本放在 `txueinfra/` 根目录
+
+| 脚本 | 关闭进程 | 编译 | 打开编辑器 |
+|---|:---:|:---:|:---:|
+| `buildOnly.bat` | ❌ | ✅ | ❌ |
+| `build.bat` | ✅ | ✅ | ❌ |
+| `buildAndOpen.bat` | ✅ | ✅ | ✅ |
+
+---
+
+## 6. 插件开发流程
+
+### [Workflow] 新插件创建流程
+1. 创建目录：`TXUEDemo/Plugins/[PluginName]/`
+2. 创建 `.uplugin`：配置插件元信息
+3. 创建 `Source/`：按标准 UE 插件结构
+4. 创建 `README.md`：说明用途、API、依赖
+5. 注册插件：在 `TXUEDemo.uproject` 中启用
+6. 编译测试：`buildOnly.bat`
+7. **更新 Plugins/README.md**：添加插件使用指南
+
+### [Constraint] 文档同步规则
+*   **[Constraint]** 新增插件必须同步更新 `Plugins/README.md`
+*   **[Constraint]** 插件 API 变更必须同步更新文档
+*   **[Constraint]** 多人协作项目，所有迭代都要记录到文档
+
+---
+
+## 7. 检查清单
+
+### 新插件检查
+- [ ] 插件目录结构符合规范
+- [ ] 不依赖项目特定代码
+- [ ] 包含 README.md 文档
+- [ ] 在 TXUEDemo 中编译测试通过
+- [ ] **已更新 Plugins/README.md**
+
+### 代码检查
+- [ ] 使用 UE5.7 配置标准（V6 + Unreal5_7 + Cpp20）
+- [ ] 模块命名符合规范（GameKit* 或 TXUE*）
+- [ ] 公共依赖仅限引擎核心模块
+
+---
+
+**层级**: L1-TXUE | **最后更新**: 2026年2月

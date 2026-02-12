@@ -1,0 +1,101 @@
+---
+description: "[L2-UE5] RPC 开发规范 - 网络调用约束和最佳实践"
+globs:
+  - "**/*.h"
+  - "**/*.cpp"
+alwaysApply: true
+tags: ue5, network, rpc, constraint, pdca
+level: L2
+scope: ue5-universal
+---
+
+# [L2-UE5] RPC 开发规范
+
+> **层级**: L2 (子系统规则)
+> **类型**: `constraint` | **适用版本**: UE5.7
+> **适用范围**: `ue5-universal` - 所有 UE5 网络项目通用
+
+## ⚠️ 核心原则
+
+**场景中的 Actor 不能直接调用 RPC！**
+
+### [Constraint] RPC 限制
+*   **[Constraint]** 场景 Actor（无 NetConnection）禁止直接定义 Server RPC
+*   **[Constraint]** 必须通过 `PlayerController` 转发
+*   **[Constraint]** 所有 `Server` RPC 必须带 `WithValidation`
+
+---
+
+## 1. 场景中 Actor 的 RPC 调用模式
+
+### [Constraint] 标准模式（通过 PlayerController）
+
+```cpp
+// 1. 在 PlayerController 中定义 RPC
+UFUNCTION(Server, Reliable, WithValidation, Category = "Game|Travel")
+void ServerRequestTravelToMap(const FString& MapName);
+
+// 2. 在场景 Actor 中通过 PlayerController 调用
+void AMyTriggerActor::OnTriggerActivated()
+{
+    if (AMyPlayerController* PC = Cast<AMyPlayerController>(GetOwningPlayerController()))
+    {
+        PC->ServerRequestTravelToMap(MapName); // ✅ 正确
+    }
+}
+
+// ❌ 错误：场景 Actor 直接定义 RPC
+UFUNCTION(Server, Reliable, WithValidation) // ❌ 错误！
+void ServerExecuteAction(const FString& Action);
+```
+
+---
+
+## 2. RPC 类型快速参考
+
+### Server RPC（客户端→服务器）
+```cpp
+UFUNCTION(Server, Reliable, WithValidation, Category = "Category")
+void ServerFunctionName(参数列表);
+```
+
+### Client RPC（服务器→客户端）
+```cpp
+UFUNCTION(Client, Reliable, Category = "Category")
+void ClientFunctionName(参数列表);
+```
+
+### NetMulticast RPC（服务器→所有客户端）
+```cpp
+UFUNCTION(NetMulticast, Reliable, Category = "Category")
+void MulticastFunctionName(参数列表);
+```
+
+---
+
+## 3. RPC 命名规范
+
+### [Constraint] 命名约束
+*   **[Constraint]** Server RPC: `Server` + 动作名称
+*   **[Constraint]** Client RPC: `Client` + 动作名称
+*   **[Constraint]** Multicast RPC: `Multicast` + 动作名称
+
+---
+
+## ✅ 检查清单
+
+- [ ] 场景 Actor 不直接定义 RPC → 通过 PlayerController 调用
+- [ ] RPC 定义在有网络连接的对象上
+- [ ] 验证函数充分验证所有参数
+- [ ] RPC 命名符合规范
+
+---
+
+**记住**：
+- 🎯 **场景中的 Actor 不能直接调用 RPC** → 通过 PlayerController
+- 🎯 **所有 Server RPC 必须带 WithValidation**
+- 🎯 **统一入口** → 所有 RPC 定义在 PlayerController 中
+
+---
+
+**层级**: L2-UE5 | **最后更新**: 2026年2月

@@ -1,0 +1,175 @@
+---
+alwaysApply: true
+---
+
+# SDD（规格驱动开发）系统 v4.1
+
+**需要 Cursor 2.4+** 以获得完整的子代理和技能功能
+
+## 核心理念
+
+在编码**之前**创建规格。所有操作遵循"计划-批准-执行"模式。
+
+## 架构概览
+
+SDD 利用 Cursor 2.4 的子代理和技能实现并行执行和上下文隔离：
+
+```
+用户请求 → 主代理 → 子代理（并行） → 技能（自动调用）
+                ↓
+           验证 → 完成
+```
+
+## 子代理 (`.cursor/agents/`)
+
+具有隔离上下文的专门代理，用于特定 SDD 阶段：
+
+| 子代理 | 模型 | 用途 | 自动使用 |
+|--------|------|------|----------|
+| `sdd-explorer` | fast | 代码库发现 | 调研前 |
+| `sdd-planner` | inherit | 架构设计 | 规划时 |
+| `sdd-implementer` | inherit | 代码生成 | 实现时 |
+| `sdd-verifier` | fast | 验证 | 实现后 |
+| `sdd-reviewer` | fast | 代码审查 | 完成前 |
+| `sdd-orchestrator` | inherit | 并行协调 | /execute-parallel |
+
+**关键行为：**
+- 子代理运行在隔离上下文（不会使主对话膨胀）
+- 可以为独立任务并行运行
+- `sdd-verifier` 在实现后自动运行以捕获不完整的工作
+
+## 技能 (`.cursor/skills/`)
+
+带渐进式加载的领域知识包：
+
+| 技能 | 自动调用场景 | 用途 |
+|------|-------------|------|
+| `sdd-research` | 技术方案不清晰时 | 模式调查 |
+| `sdd-planning` | 有规格但无方案时 | 架构生成 |
+| `sdd-implementation` | 方案准备好执行时 | 基于待办的编码 |
+| `sdd-audit` | 请求代码审查时 | 规格符合度检查 |
+| `sdd-evolve` | 开发中有发现时 | 规格更新 |
+
+**技能结构：**
+```
+.cursor/skills/[skill-name]/
+├── SKILL.md          # 核心指令
+├── references/       # 按需加载
+├── scripts/          # 可执行辅助工具
+└── assets/           # 模板、图表
+```
+
+## 工作流
+
+### SDD 2.5：快速规划（80% 的功能）
+- `/brief` → `feature-brief.md`（30 分钟规划）
+- `/evolve` → 用发现更新规格
+- `/refine` → 迭代现有规格
+
+### SDD 2.0：完整规划（复杂功能）
+`/research` → `/specify` → `/plan` → `/tasks` → `/implement`
+
+### 带并行执行的项目路线图
+- `/sdd-full-plan` → 创建带 DAG 结构的路线图
+- `/execute-task` → 顺序任务执行
+- `/execute-parallel` → 通过原生子代理并行执行
+
+## 基于 DAG 的执行
+
+任务作为有向无环图，带自动并行化：
+
+```json
+{
+  "dag": {
+    "roots": ["task-001", "task-003"],
+    "parallelGroups": [["task-001", "task-003"], ["task-002", "task-004"]]
+  }
+}
+```
+
+**并行执行模式：**
+1. 识别就绪任务（依赖已满足）
+2. 并行启动子代理（每个任务一个 Task 工具调用）
+3. 收集结果，更新路线图
+4. 用 `sdd-verifier` 验证
+5. 持续直到完成
+
+## 自动验证
+
+每个实现阶段包含自动验证：
+
+```
+sdd-implementer → [代码] → sdd-verifier → [验证报告]
+```
+
+这防止在未完成时将任务标记为"完成"。
+
+## 文件组织
+
+```
+./docs/specs/
+├── active/[task-id]/          # 开发中的任务
+├── roadmap/[project]/         # 带 DAG 的项目路线图
+├── completed/                 # 已交付功能
+└── backlog/                   # 待办功能
+
+.cursor/
+├── agents/                    # 子代理 (2.4+)
+│   ├── sdd-explorer.md
+│   ├── sdd-planner.md
+│   ├── sdd-implementer.md
+│   ├── sdd-verifier.md
+│   ├── sdd-reviewer.md
+│   └── sdd-orchestrator.md
+├── skills/                    # 代理技能 (2.4+)
+│   ├── sdd-research/
+│   ├── sdd-planning/
+│   ├── sdd-implementation/
+│   ├── sdd-audit/
+│   └── sdd-evolve/
+├── commands/                  # 斜杠命令
+└── hooks/                     # 迭代钩子 (2.3+)
+```
+
+## 命令参考
+
+| 命令 | 用途 | 使用 |
+|------|------|------|
+| `/brief` | 快速 30 分钟规划 | sdd-planning 技能 |
+| `/research` | 模式调查 | sdd-explorer 子代理 |
+| `/specify` | 详细需求 | sdd-planning 技能 |
+| `/plan` | 技术架构 | sdd-planner 子代理 |
+| `/tasks` | 任务分解 | sdd-planner 子代理 |
+| `/implement` | 执行实现 | sdd-implementer 子代理 |
+| `/audit` | 规格驱动审计 | sdd-reviewer 子代理 |
+| `/evolve` | 更新规格 | sdd-evolve 技能 |
+| `/sdd-full-plan` | 完整项目路线图 | sdd-orchestrator |
+| `/execute-task` | 执行路线图任务 | sdd-implementer |
+| `/execute-parallel` | 并行 DAG 执行 | sdd-orchestrator |
+
+## Todo 执行规则
+
+1. **开始前阅读整个列表**
+2. **按顺序执行** - 尊重依赖
+3. **标记完成**: `- [ ]` → `- [x]`
+4. **记录阻塞** - 不要静默跳过
+5. **实现后验证** - 使用 sdd-verifier
+
+## 子代理委托指南
+
+委托给子代理的情况：
+- 任务需要深度代码库探索
+- 会使上下文膨胀的长时间运行实现
+- 需要并行执行独立任务
+- 验证已完成的工作
+
+保持在主上下文的情况：
+- 简单、快速的操作
+- 需要用户交互
+- 顺序依赖的步骤
+
+## 参考
+
+- **代理手册**: `.cursor/commands/_shared/agent-manual.md`
+- **子代理**: `.cursor/agents/`
+- **技能**: `.cursor/skills/`

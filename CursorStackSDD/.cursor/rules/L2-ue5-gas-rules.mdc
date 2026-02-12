@@ -1,0 +1,100 @@
+---
+description: "[L2-UE5] GAS 开发规则 - GameplayAbilitySystem 最佳实践"
+globs:
+  - "**/GameKit*/**/*.cpp"
+  - "**/GameKit*/**/*.h"
+  - "**/GAS/**/*"
+  - "**/Abilities/**/*"
+alwaysApply: true
+tags: ue5, gas, constraint, pdca
+level: L2
+scope: ue5-universal
+---
+
+# [L2-UE5] GAS 开发规则
+
+> **层级**: L2 (子系统规则)
+> **类型**: `constraint` | **适用版本**: UE5.7
+> **适用范围**: `ue5-universal` - 所有使用 GAS 的 UE5 项目
+
+---
+
+## 1. 核心开发原则
+
+### [Constraint] 职责分离原则
+*   **[Constraint]** 业务逻辑独立：AttributeSet初始化、Effect计算等核心逻辑不依赖测试代码
+*   **[Constraint]** 测试纯观察：测试代码只观察和验证业务逻辑结果，不修改业务状态
+
+### [Constraint] 数据驱动设计
+*   **[Constraint]** 配表优先：所有可配置的数值都应从DataTable读取，避免硬编码
+*   **[Constraint]** 自动初始化：AttributeSet在AbilitySet授予时自动从配表读取BaseValue
+
+---
+
+## 2. GAS 架构最佳实践
+
+### [Constraint] Meta属性标准模式
+*   **[Constraint]** Meta属性不要添加到GetLifetimeReplicatedProps
+*   **[Constraint]** 不要添加OnRep函数
+*   **[Constraint]** 只在PostGameplayEffectExecute中本地处理
+
+```cpp
+// ✅ 正确的Meta属性设计
+UPROPERTY(BlueprintReadOnly, Category = "Meta Attributes")
+FGameplayAttributeData IncomingDamage;
+
+void UMyAttributeSet::PostGameplayEffectExecute(...)
+{
+    if (Data.EvaluatedData.Attribute == GetIncomingDamageAttribute())
+    {
+        HandleIncomingDamage(Data);
+    }
+}
+```
+
+---
+
+## 3. 公式配置机制
+
+### [Constraint] 公式指定
+*   **[Constraint]** 通过 AssetTag 指定公式，从配表读取参数
+*   **[Constraint]** 总是提供默认值，不要崩溃
+
+```cpp
+// GE蓝图配置 AssetTag: Formula.Damage.Physical
+// → 转换为配置名: DamageCalculation_Physical
+// → 查询配表: 使用对应的公式参数
+```
+
+**支持的公式Tag格式**：
+- `Formula.Damage.Physical` → `DamageCalculation_Physical`
+- `Formula.Healing.Normal` → `HealingCalculation_Normal`
+
+---
+
+## 4. AttributeSet 初始化
+
+### [Constraint] 初始化时机
+*   **[Constraint]** 在AbilitySet授予时自动初始化
+*   **[Constraint]** 使用`InitializeFromDataTableConfig()`从配表读取BaseValue
+*   **[Constraint]** 不要在构造函数中初始化（可能配表未加载）
+
+---
+
+## ✅ 检查清单
+
+- [ ] Meta属性未添加网络复制
+- [ ] 配表驱动，避免硬编码
+- [ ] 公式通过AssetTag指定
+- [ ] AttributeSet在AbilitySet授予时初始化
+
+---
+
+**记住**：
+- 🎯 **数据驱动**：配表优先，避免硬编码
+- 🎯 **职责分离**：业务逻辑独立，测试纯观察
+- 🎯 **公式配置化**：通过AssetTag指定公式
+
+---
+
+**层级**: L2-UE5 | **最后更新**: 2026年2月

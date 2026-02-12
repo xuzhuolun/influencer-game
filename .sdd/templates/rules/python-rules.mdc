@@ -1,0 +1,370 @@
+---
+alwaysApply: true
+---
+
+# Python 编码规则
+
+遵循 PEP 8 和 10X 开发原则的 Python 开发最佳实践。
+
+## Python 版本
+
+**目标:** Python 3.8+  
+**使用现代特性:** f-strings, 类型提示, dataclasses
+
+---
+
+## 核心原则
+
+- **PEP 8:** 遵循 Python 风格指南
+- **DRY:** 使用函数、类、模块
+- **KISS:** Python 式的简洁
+- **模块化:** 清晰的模块组织
+
+---
+
+## 代码风格 (PEP 8)
+
+### 命名约定
+
+**变量和函数使用 snake_case:**
+```python
+# ✅ 正确: snake_case
+user_name = 'John'
+is_active = True
+
+def calculate_total():
+    pass
+```
+
+**类使用 PascalCase:**
+```python
+# ✅ 正确: 类使用 PascalCase
+class UserService:
+    pass
+```
+
+**常量使用 UPPER_SNAKE_CASE:**
+```python
+# ✅ 正确: 常量
+MAX_RETRIES = 3
+API_BASE_URL = 'https://api.example.com'
+```
+
+**私有成员使用前导下划线:**
+```python
+# ✅ 正确: 私有成员
+class User:
+    def __init__(self):
+        self._internal_data = {}  # 受保护
+        self.__private_data = {}  # 名称改编
+```
+
+### 缩进
+
+**4 个空格 (绝不用制表符):**
+```python
+# ✅ 正确: 4 个空格
+def process_data():
+    if condition:
+        do_something()
+```
+
+### 行长度
+
+**最大 100 字符 (PEP 8 建议 79，但 100 更常用):**
+```python
+# ✅ 正确: 换行长行
+result = some_function(
+    param1,
+    param2,
+    param3
+)
+```
+
+---
+
+## 类型提示
+
+### 使用类型提示
+
+**为函数添加类型提示:**
+```python
+# ✅ 正确: 类型提示
+def calculate_total(items: list[Item]) -> float:
+    return sum(item.price for item in items)
+
+def get_user(user_id: int) -> User | None:
+    # Python 3.10+ 联合类型语法
+    pass
+```
+
+**变量的类型提示:**
+```python
+# ✅ 正确: 变量类型提示
+user_name: str = 'John'
+user_count: int = 0
+is_active: bool = True
+```
+
+### 类型别名
+
+**对复杂类型使用类型别名:**
+```python
+# ✅ 正确: 类型别名
+from typing import Dict, List, Optional
+
+UserId = int
+UserDict = Dict[str, Any]
+UserList = List[User]
+
+def get_users() -> UserList:
+    pass
+```
+
+---
+
+## 现代 Python 特性
+
+### f-Strings
+
+**使用 f-strings 进行字符串格式化:**
+```python
+# ✅ 正确: f-strings
+name = 'John'
+message = f'你好, {name}!'
+
+# ❌ 错误: 旧风格
+message = '你好, %s!' % name
+message = '你好, {}!'.format(name)
+```
+
+### 列表/字典推导式
+
+**适时使用推导式:**
+```python
+# ✅ 正确: 列表推导式
+numbers = [1, 2, 3, 4, 5]
+squared = [n ** 2 for n in numbers]
+evens = [n for n in numbers if n % 2 == 0]
+
+# ✅ 正确: 字典推导式
+user_dict = {user.id: user for user in users}
+```
+
+**不要过度使用:**
+```python
+# ❌ 错误: 复杂推导式 (难以阅读)
+result = [x for x in [y for y in data if y > 0] if x % 2 == 0]
+
+# ✅ 正确: 拆分
+positive = [y for y in data if y > 0]
+result = [x for x in positive if x % 2 == 0]
+```
+
+### 海象运算符 (Python 3.8+)
+
+**在提高可读性时使用:**
+```python
+# ✅ 正确: 海象运算符
+if (n := len(items)) > 10:
+    print(f'正在处理 {n} 个项目')
+```
+
+---
+
+## 函数
+
+### 函数设计
+
+**小而专注的函数:**
+```python
+# ✅ 正确: 单一职责
+def calculate_item_total(item: Item) -> float:
+    return item.price * item.quantity
+
+def calculate_order_total(items: list[Item]) -> float:
+    return sum(calculate_item_total(item) for item in items)
+```
+
+**默认参数:**
+```python
+# ✅ 正确: 默认参数
+def greet(name: str, greeting: str = '你好') -> str:
+    return f'{greeting}, {name}!'
+```
+
+**仅关键字参数:**
+```python
+# ✅ 正确: 仅关键字参数增加清晰度
+def create_user(name: str, *, email: str, age: int) -> User:
+    # email 和 age 必须是关键字参数
+    pass
+```
+
+---
+
+## 错误处理
+
+### 异常处理
+
+**使用特定异常:**
+```python
+# ✅ 正确: 特定异常
+try:
+    user = get_user(user_id)
+except UserNotFoundError:
+    return None
+except DatabaseError as e:
+    logger.error(f'数据库错误: {e}')
+    raise
+```
+
+**不要捕获所有异常:**
+```python
+# ❌ 错误: 捕获所有
+try:
+    risky_operation()
+except:  # 太宽泛！
+    pass
+
+# ✅ 正确: 特定异常
+try:
+    risky_operation()
+except SpecificError:
+    handle_error()
+```
+
+### 自定义异常
+
+**创建自定义异常:**
+```python
+# ✅ 正确: 自定义异常
+class ValidationError(Exception):
+    def __init__(self, field: str, message: str):
+        self.field = field
+        self.message = message
+        super().__init__(f'{field}: {message}')
+```
+
+---
+
+## 类
+
+### 类设计
+
+**简单数据使用 dataclasses:**
+```python
+# ✅ 正确: Dataclass (Python 3.7+)
+from dataclasses import dataclass
+
+@dataclass
+class User:
+    id: int
+    name: str
+    email: str
+    age: int = 0
+```
+
+**行为使用类:**
+```python
+# ✅ 正确: 有行为的类
+class UserService:
+    def __init__(self, db: Database):
+        self.db = db
+    
+    def get_user(self, user_id: int) -> User | None:
+        return self.db.find_user(user_id)
+```
+
+---
+
+## 模块和包
+
+### 模块组织
+
+**按功能组织:**
+```
+project/
+├── users/
+│   ├── __init__.py
+│   ├── models.py
+│   ├── services.py
+│   └── views.py
+├── orders/
+│   ├── __init__.py
+│   └── ...
+└── utils/
+    └── ...
+```
+
+### 导入
+
+**组织导入:**
+```python
+# 1. 标准库
+import os
+import sys
+from typing import List, Dict
+
+# 2. 第三方
+import requests
+from django import forms
+
+# 3. 本地
+from users.models import User
+from utils.helpers import calculate_total
+```
+
+**使用绝对导入:**
+```python
+# ✅ 正确: 绝对导入
+from users.services import UserService
+
+# ❌ 错误: 相对导入 (可避免时)
+from ..services import UserService
+```
+
+---
+
+## 测试
+
+### 测试结构
+
+**使用 pytest:**
+```python
+# ✅ 正确: pytest 结构
+import pytest
+from users.services import UserService
+
+def test_get_user_success():
+    service = UserService(mock_db)
+    user = service.get_user(1)
+    assert user is not None
+    assert user.id == 1
+
+def test_get_user_not_found():
+    service = UserService(mock_db)
+    user = service.get_user(999)
+    assert user is None
+```
+
+---
+
+## 最佳实践总结
+
+1. **遵循 PEP 8** - Python 风格指南
+2. **使用类型提示** - 添加类型信息
+3. **f-Strings** - 现代字符串格式化
+4. **推导式** - 可读时使用
+5. **特定异常** - 捕获特定错误
+6. **Dataclasses** - 用于简单数据结构
+7. **小函数** - 单一职责
+8. **模块组织** - 清晰的结构
+9. **绝对导入** - 优先使用
+10. **测试所有** - 编写测试
+
+---
+
+**生成者:** `/generate-rules` 命令  
+**最后更新:** {{DATE}}  
+**项目复杂度:** {{COMPLEXITY}}

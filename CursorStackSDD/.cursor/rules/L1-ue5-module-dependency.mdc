@@ -1,0 +1,133 @@
+---
+description: "[L1-UE5] 模块依赖规范 - 插件层级架构和依赖管理"
+globs:
+  - "**/*.Build.cs"
+  - "**/*.uplugin"
+  - "**/*.uproject"
+alwaysApply: true
+tags: ue5, module, dependency, constraint
+level: L1
+scope: ue5-universal
+---
+
+# [L1-UE5] 模块依赖规范
+
+> **层级**: L1 (通用工程规则)
+> **类型**: `constraint` | **适用版本**: UE5.7
+> **适用范围**: `ue5-universal` - 所有 UE5 项目通用
+
+---
+
+## 1. 插件层级架构
+
+### [Constraint] 层级定义
+
+```
+┌─────────────────────────────────────────┐
+│  具体项目代码（MyProject Module）        │  ← 项目特定，可改名
+├─────────────────────────────────────────┤
+│  GameKitCore                            │  ← 业务核心（框架顶层）
+├─────────────────────────────────────────┤
+│  CommonGame / CommonUser / UIExtension  │  ← 通用游戏框架
+├─────────────────────────────────────────┤
+│  ModularGameplayActors / AsyncMixin     │  ← 模块化基础
+│  GameplayMessageRouter                  │
+├─────────────────────────────────────────┤
+│  UE5 Engine                             │  ← 引擎
+└─────────────────────────────────────────┘
+```
+
+### [Constraint] 依赖方向
+*   **[Constraint]** 依赖只能从上层指向下层
+*   **[Constraint]** 严禁下层模块依赖上层模块
+*   **[Constraint]** 严禁同层模块之间循环依赖
+
+---
+
+## 2. 层级职责
+
+| 层级 | 插件 | 职责 |
+|---|---|---|
+| **项目代码** | MyProject | 项目特定逻辑、玩法实现 |
+| **业务核心** | GameKitCore | 业务基类、通用组件、Experience 系统 |
+| **通用框架** | CommonGame, CommonUser, UIExtension | UI 框架、用户管理、扩展点 |
+| **模块化基础** | ModularGameplayActors, AsyncMixin, GameplayMessageRouter | 角色基类、异步加载、消息路由 |
+
+---
+
+## 3. Build.cs 依赖配置
+
+### [Constraint] 公共依赖限制
+*   **[Constraint]** 框架插件的公共依赖仅限引擎核心模块：
+    - `Core`, `CoreUObject`, `Engine`, `InputCore`
+*   **[Constraint]** 禁止框架插件依赖项目特定模块
+
+### [Constraint] 依赖声明规范
+
+```csharp
+// ✅ 正确：明确区分 Public 和 Private 依赖
+PublicDependencyModuleNames.AddRange(new string[] {
+    "Core",
+    "CoreUObject", 
+    "Engine"
+});
+
+PrivateDependencyModuleNames.AddRange(new string[] {
+    "Slate",
+    "SlateCore",
+    "UMG"
+});
+
+// ❌ 错误：框架插件依赖项目模块
+PublicDependencyModuleNames.Add("MyProjectModule"); // ❌
+```
+
+---
+
+## 4. 循环依赖处理
+
+### [Constraint] 解决循环依赖
+*   **[Constraint]** 识别共享定义（类型、接口、常量）
+*   **[Constraint]** 将共享定义迁移到更底层的公共模块
+*   **[Constraint]** 通过接口/委托解耦模块间调用
+
+```cpp
+// ✅ 正确：通过接口解耦
+// 在 GameKitCore 定义接口
+class IInventoryInterface
+{
+    virtual void AddItem(const FItemData& Item) = 0;
+};
+
+// 在具体模块实现接口
+class UMyInventorySystem : public IInventoryInterface { ... };
+```
+
+---
+
+## 5. GameFeature 插件依赖
+
+### [Constraint] GameFeature 特殊规则
+*   **[Constraint]** GameFeature 插件可以依赖 GameKitCore
+*   **[Constraint]** GameFeature 插件之间不应相互依赖
+*   **[Constraint]** GameFeature 插件不应被其他插件依赖
+
+```
+GameFeature_Combat  →  GameKitCore  ✅
+GameFeature_Combat  →  GameFeature_Inventory  ❌
+MyProjectModule     →  GameFeature_Combat  ❌
+```
+
+---
+
+## ✅ 检查清单
+
+- [ ] 依赖方向从上层指向下层
+- [ ] 无循环依赖
+- [ ] 框架插件不依赖项目模块
+- [ ] Build.cs 明确区分 Public/Private 依赖
+- [ ] GameFeature 插件间无相互依赖
+
+---
+
+**层级**: L1-UE5 | **最后更新**: 2026年2月

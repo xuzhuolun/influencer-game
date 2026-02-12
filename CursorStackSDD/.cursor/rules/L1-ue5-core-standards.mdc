@@ -1,0 +1,146 @@
+---
+description: "[L1-UE5] 核心开发规范 - C++、内存、架构、性能"
+globs:
+  - "**/*.h"
+  - "**/*.cpp"
+  - "**/*.cs"
+alwaysApply: true
+tags: ue5, cpp, constraint, pdca
+level: L1
+scope: ue5-universal
+---
+
+# [L1-UE5] 核心开发规范
+
+> **层级**: L1 (通用工程规则)
+> **类型**: `constraint` | **适用版本**: UE5.7
+> **适用范围**: `ue5-universal` - 所有 UE5 项目通用
+
+## 🔍 源码学习提醒
+
+**重要：每次开发前，请先查阅 UE5 源码目录和 AI 文档中心**
+- Runtime源码：`UE5_7/EngineCode/Source/Runtime/`
+- Editor源码：`UE5_7/EngineCode/Source/Editor/`
+- 引擎AI文档中心：`UE5_7/引擎AI文档中心/`
+
+---
+
+## 1. C++ 核心规范
+
+### [Constraint] 命名规范
+*   **[Constraint]** 严格遵循 UE 前缀: `UObject`, `AActor`, `FStruct`, `EEnum`, `IInterface`, `bBool`
+*   **[Constraint]** 文件名必须与类名完全匹配（不含前缀）
+
+### [Constraint] 代码结构
+*   **包含顺序**: 1. `MyClass.h` → 2. `CoreMinimal.h` → 3. `Engine/World.h` → 4. `MyProject/...`
+
+---
+
+## 2. 内存管理
+
+### [Constraint] UObject 管理
+*   **[Constraint]** UObject 成员使用 `TObjectPtr`
+*   **[Constraint]** 非 UObject 使用智能指针 (`TSharedPtr`)
+*   **[Constraint]** 严禁裸指针拥有资源
+
+### [Constraint] 软引用陷阱 ⚠️
+*   **[Constraint]** 软引用必须用 `IsNull()` 检查配置，禁止用 `IsValid()`（防止误判未加载资产）
+
+```cpp
+// ❌ 错误：使用 IsValid() 检查软引用
+if (!WidgetClass.IsValid()) { return; }
+
+// ✅ 正确：使用 IsNull() 检查
+if (WidgetClass.IsNull()) { return; }
+UClass* LoadedClass = WidgetClass.LoadSynchronous();
+```
+
+---
+
+## 3. 架构模式
+
+### [Constraint] Static 变量陷阱 🔥
+*   **[Constraint]** 严禁在初始化函数中使用 `static` 变量标记状态
+*   **原因**: PIE 模式下 `static` 变量不重置，导致二次运行逻辑错误
+*   **Fix**: 状态存 `GameInstance` 或 `Subsystem` 成员变量
+
+### [Suggestion] Subsystem 优先
+*   **[Suggestion]** 使用 `Subsystem` 替代 `Manager` Actor
+*   ⚠️ **例外**: 如需 RPC，应使用 `UActorComponent` 或有 `NetConnection` 的 Actor
+
+### [Constraint] 循环依赖
+*   **[Constraint]** 将共享定义迁移到 `GameKitCore` 或公共基础模块
+
+---
+
+## 4. 生命周期闭环 🔄
+
+### [Constraint] 资源闭环原则
+*   **[Constraint]** 任何"激活/加载"操作必须有对应的"停用/卸载"逻辑
+*   **[Constraint]** EndPlay/Shutdown 时必须清理所有动态加载的资源
+*   **[Constraint]** 编辑器环境需要引用计数管理（PIE 多实例场景）
+
+### [Constraint] GameFeature 闭环（参考 Lyra）
+*   **[Constraint]** 激活时：引用计数 +1
+*   **[Constraint]** 停用时：引用计数 -1，归零才真正 Deactivate
+*   **[Constraint]** EndPlay 必须调用停用逻辑
+
+```cpp
+// ✅ 正确：完整闭环
+void OnGameFeatureActivated(const FString& URL) {
+    NotifyOfPluginActivation(URL);  // 计数 +1
+    LoadedPlugins.Add(URL);
+}
+
+void EndPlay(...) {
+    for (const FString& URL : LoadedPlugins) {
+        if (RequestToDeactivatePlugin(URL)) {  // 计数 -1，归零才停用
+            UGameFeaturesSubsystem::Get().DeactivateGameFeaturePlugin(URL);
+        }
+    }
+}
+
+// ❌ 错误：只激活不停用
+void LoadExperience(...) {
+    UGameFeaturesSubsystem::Get().LoadAndActivateGameFeaturePlugin(URL, ...);
+    // EndPlay 里没有 Deactivate → PIE 状态残留
+}
+```
+
+---
+
+## 5. 性能优化
+
+### [Constraint] Tick 优化
+*   **[Constraint]** 默认 `bCanEverTick = false`
+*   **[Suggestion]** 必须 Tick 时设置间隔: `PrimaryActorTick.TickInterval = 0.1f;`
+
+---
+
+## 6. 反射宏规范
+
+### [Constraint] 反射约束
+*   **[Constraint]** 暴露给蓝图的函数必须带 Category
+*   **[Constraint]** 结构体必须可蓝图访问: `USTRUCT(BlueprintType)`
+
+---
+
+## 7. 调试宏
+
+```cpp
+check(Condition);              // 断言，失败会崩溃
+ensure(Condition);             // 确保，失败会报告但继续执行
+checkSlow(Condition);          // 仅在Debug配置下检查
+```
+
+---
+
+**记住**：
+- 🎯 **命名规范**: U/A/I/E/F/T/b 前缀
+- 🎯 **软引用陷阱**: 使用 IsNull() 而非 IsValid()
+- 🎯 **PIE 模式陷阱**: 绝不在初始化逻辑中使用 static bool
+- 🎯 **循环依赖**: 迁移共享定义到 GameKitCore
+
+---
+
+**层级**: L1-UE5 | **最后更新**: 2026年2月

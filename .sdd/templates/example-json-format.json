@@ -1,0 +1,75 @@
+{
+  "task_id": "user-auth-system",
+  "spec": {
+    "problem": "用户需要安全认证",
+    "users": ["新用户", "回访用户", "管理员"],
+    "value": "安全的访问控制 + 用户管理",
+    "must_have": [
+      {
+        "req": "邮箱/密码登录",
+        "criteria": "用户可以使用有效凭据进行认证"
+      },
+      {
+        "req": "JWT 令牌生成", 
+        "criteria": "安全令牌，24小时过期"
+      }
+    ],
+    "stories": [
+      {
+        "role": "用户",
+        "action": "希望安全登录",
+        "outcome": "访问受保护的功能",
+        "acceptance": "有效凭据 → JWT 令牌 + 跳转",
+        "priority": "P0",
+        "effort": "M"
+      }
+    ],
+    "success_metrics": "登录成功率 >95%，认证响应 <200ms",
+    "dependencies": ["用户数据库", "JWT 库"],
+    "out_of_scope": ["社交登录", "双因素认证", "密码重置"]
+  },
+  "plan": {
+    "tech_stack": {
+      "frontend": "React + Context API",
+      "backend": "Node.js + Express", 
+      "database": "PostgreSQL",
+      "auth": "JWT + bcrypt"
+    },
+    "components": [
+      {"name": "LoginForm", "desc": "认证界面", "tech": "React"},
+      {"name": "AuthService", "desc": "JWT 处理", "tech": "Node.js"},
+      {"name": "UserModel", "desc": "用户数据", "tech": "Sequelize"}
+    ],
+    "apis": [
+      {
+        "method": "POST",
+        "endpoint": "/api/auth/login",
+        "request": "{email, password}",
+        "response": "{token, user, expires}"
+      }
+    ]
+  },
+  "tasks": {
+    "setup": [
+      {"task": "安装 JWT + bcrypt 依赖", "effort": "0.5h", "owner": "dev1"}
+    ],
+    "core": [
+      {
+        "task": "创建 User 模型 + 迁移",
+        "effort": "2h", 
+        "owner": "dev1",
+        "deps": "setup"
+      },
+      {
+        "task": "构建 AuthService（含 JWT）",
+        "effort": "4h",
+        "owner": "dev1", 
+        "deps": "User 模型"
+      }
+    ],
+    "estimates": {
+      "total": "12h",
+      "target": "3 天"
+    }
+  }
+}

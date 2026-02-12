@@ -1,0 +1,192 @@
+---
+description: "[L2-GameKit] Experience 系统规范 - 游戏体验配置和加载"
+globs:
+  - "**/Experience/**/*"
+  - "**/*Experience*.uasset"
+alwaysApply: true
+tags: gamekit, experience, constraint, pdca
+level: L2
+scope: gamekit-framework
+---
+
+# [L2-GameKit] Experience 系统规范
+
+> **层级**: L2 (子系统规则)
+> **类型**: `constraint` | **适用版本**: UE5.7
+> **适用范围**: `gamekit-framework` - 使用 GameKitCore 框架的项目
+
+---
+
+## 1. Experience 核心概念
+
+### 什么是 Experience？
+- **游戏体验定义**：描述一种完整的游戏体验（如主菜单、战斗关卡、城镇）
+- **配置化入口**：通过数据资产配置，无需硬编码
+- **GameFeature 编排**：定义需要激活哪些 GameFeature
+
+```
+WorldSettings 指定 Experience
+       │
+       ▼
+ExperienceManagerComponent 加载 Experience
+       │
+       ▼
+激活 GameFeature 列表
+       │
+       ▼
+执行 ActionSet
+       │
+       ▼
+通知 Experience 加载完成
+```
+
+---
+
+## 2. Experience Definition 规范
+
+### [Constraint] ExperienceDefinition 结构
+
+```cpp
+UCLASS(BlueprintType)
+class UGameKitExperienceDefinition : public UPrimaryDataAsset
+{
+    // 需要激活的 GameFeature 列表
+    UPROPERTY(EditDefaultsOnly)
+    TArray<FString> GameFeaturesToEnable;
+    
+    // 加载完成后执行的 ActionSet
+    UPROPERTY(EditDefaultsOnly)
+    TArray<TObjectPtr<UGameKitExperienceActionSet>> ActionSets;
+    
+    // 默认 PawnData（可选）
+    UPROPERTY(EditDefaultsOnly)
+    TObjectPtr<UGameKitPawnData> DefaultPawnData;
+};
+```
+
+### [Constraint] 命名规范
+*   **[Constraint]** Experience 资产名：`EXP_[体验名]`（如 `EXP_MainMenu`, `EXP_Combat`）
+*   **[Constraint]** 存放路径：`Content/Logic/Experiences/`
+
+---
+
+## 3. Experience 加载流程
+
+### [Constraint] 加载状态机
+
+```
+Unloaded → Loading → LoadingGameFeatures → ExecutingActions → Loaded
+    │                                                           │
+    └──────────────────── Unloading ◄───────────────────────────┘
+```
+
+### [Constraint] 加载规则
+*   **[Constraint]** Experience 由 `ExperienceManagerComponent` 管理
+*   **[Constraint]** 一个 World 同时只能有一个 Experience 处于 Loaded 状态
+*   **[Constraint]** 切换 Experience 前必须先卸载当前 Experience
+
+---
+
+## 4. ActionSet 规范
+
+### [Constraint] ActionSet 用途
+- 在 Experience 加载完成后执行的一组操作
+- 与 GameFeatureAction 类似，但属于 Experience 级别
+
+### [Constraint] 常用 Action 类型
+*   **AddWidgets**: 添加 UI 到 PrimaryGameLayout
+*   **AddComponents**: 添加组件到指定 Actor
+*   **SpawnActors**: 生成 Actor 到世界
+
+```cpp
+// ActionSet 示例
+UCLASS()
+class UGameKitExperienceActionSet : public UPrimaryDataAsset
+{
+    UPROPERTY(EditDefaultsOnly)
+    TArray<TObjectPtr<UGameFeatureAction>> Actions;
+};
+```
+
+---
+
+## 5. WorldSettings 集成
+
+### [Constraint] 指定默认 Experience
+*   **[Constraint]** 通过 `WorldSettings` 的 `DefaultExperience` 属性指定
+*   **[Constraint]** 可在蓝图或 C++ 中动态切换
+
+```cpp
+// 在 WorldSettings 中配置
+UPROPERTY(EditAnywhere, Category = "GameKit|Experience")
+TSoftObjectPtr<UGameKitExperienceDefinition> DefaultExperience;
+```
+
+---
+
+## 6. Experience 加载事件
+
+### [Constraint] 事件通知
+*   **[Constraint]** 使用委托通知 Experience 加载完成
+*   **[Constraint]** 其他系统应等待 Experience 加载完成后再初始化
+
+```cpp
+// 等待 Experience 加载完成
+void AMyActor::BeginPlay()
+{
+    Super::BeginPlay();
+    
+    if (UGameKitExperienceManagerComponent* ExpManager = FindExperienceManager())
+    {
+        ExpManager->CallOrRegister_OnExperienceLoaded(
+            FOnExperienceLoaded::FDelegate::CreateUObject(this, &AMyActor::OnExperienceLoaded)
+        );
+    }
+}
+
+void AMyActor::OnExperienceLoaded(const UGameKitExperienceDefinition* Experience)
+{
+    // Experience 加载完成，可以安全初始化
+}
+```
+
+---
+
+## 7. 与 GameFeature 的关系
+
+```
+Experience (高层配置)
+    │
+    ├── 定义需要哪些 GameFeature
+    │
+    └── 定义 ActionSet（Experience 级别操作）
+    
+GameFeature (功能模块)
+    │
+    └── 定义 GameFeatureAction（功能级别操作）
+```
+
+### [Constraint] 职责划分
+*   **Experience**: 编排和配置
+*   **GameFeature**: 功能实现
+
+---
+
+## ✅ 检查清单
+
+- [ ] ExperienceDefinition 命名符合 `EXP_[体验名]` 格式
+- [ ] 通过 WorldSettings 正确指定默认 Experience
+- [ ] 其他系统等待 Experience 加载完成后再初始化
+- [ ] Experience 切换时正确卸载旧 Experience
+- [ ] ActionSet 有对应的清理逻辑
+
+---
+
+**记住**：
+- 🎯 **Experience 是入口**：定义游戏体验的配置
+- 🎯 **等待加载完成**：其他系统应等待 Experience 就绪
+- 🎯 **一个 World 一个 Experience**：同时只能有一个激活
+
+---
+
+**层级**: L2-GameKit | **最后更新**: 2026年2月

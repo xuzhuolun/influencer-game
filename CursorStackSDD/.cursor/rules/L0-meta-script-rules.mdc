@@ -1,0 +1,79 @@
+---
+description: "[L0-Meta] 脚本编写规范 - 目录结构和路径管理"
+globs:
+  - "**/*.bat"
+  - "**/*.ps1"
+  - "**/*.sh"
+alwaysApply: true
+tags: meta, script, pdca
+level: L0
+scope: ue5-universal
+---
+
+# [L0-Meta] 脚本编写规范
+
+> **层级**: L0 (元规则 - 管理规则的规则)
+> **类型**: `constraint` | **优先级**: 最高
+> **适用范围**: `ue5-universal` - 所有 UE5 项目通用
+
+---
+
+## 1. 目录结构规范
+
+### [Constraint] 脚本位置
+*   **[Constraint]** 构建脚本（build.bat 等）放在项目根目录
+*   **[Constraint]** 其他脚本按功能分类放在 `Batches/` 目录（可选）
+
+```
+项目根目录/
+├── build.bat              # 构建脚本
+├── buildAndOpen.bat       # 构建并打开编辑器
+├── buildOnly.bat          # 仅构建
+└── Batches/               # 其他脚本的统一目录（可选）
+    ├── Build/             # 构建相关脚本
+    ├── Run/               # 运行/启动相关脚本
+    ├── Android/           # Android 相关脚本
+    ├── Log/               # 日志相关脚本
+    ├── Dev/               # 开发工具相关脚本
+    └── Test/              # 测试相关脚本
+```
+
+---
+
+## 2. 路径使用规范
+
+### [Constraint] 路径约束
+*   **[Constraint]** 严禁使用硬编码的绝对路径
+*   **[Constraint]** 严禁使用用户特定的路径（如 `C:\Users\用户名\`）
+*   **[Constraint]** 必须使用相对路径
+
+```batch
+REM ✅ 正确：使用相对路径
+set "PROJECT_PATH=%~dp0MyProject.uproject"
+
+REM ❌ 错误：硬编码绝对路径
+set "PROJECT_PATH=D:\Workspace\MyProject\MyProject.uproject"
+```
+
+---
+
+## 3. 脚本内容规范
+
+### [Constraint] 脚本头部
+*   **[Constraint]** 必须包含脚本名称、功能描述、路径位置说明
+
+### [Constraint] 错误处理
+*   **[Constraint]** 必须检查路径存在性和命令执行结果
+
+---
+
+## 4. 检查清单
+
+- [ ] 确认功能分类（Build/Run/Android/Log/Dev/Test）
+- [ ] 确认放置目录
+- [ ] 确认使用相对路径
+- [ ] 确认添加脚本头部和错误处理
+
+---
+
+**层级**: L0-Meta | **最后更新**: 2026年2月

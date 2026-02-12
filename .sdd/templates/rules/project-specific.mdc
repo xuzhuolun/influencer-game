@@ -1,0 +1,65 @@
+---
+alwaysApply: true
+---
+
+# 项目特定规则
+
+基于代码库分析检测到的项目特定约定和模式。
+
+**注意:** 此文件根据您的代码库分析生成。请根据需要自定义。
+
+---
+
+## 检测到的模式
+
+{{DETECTED_PATTERNS}}
+
+---
+
+## 项目结构
+
+{{PROJECT_STRUCTURE}}
+
+---
+
+## 代码约定
+
+{{CODE_CONVENTIONS}}
+
+---
+
+## 架构模式
+
+{{ARCHITECTURE_PATTERNS}}
+
+---
+
+## 自定义工具
+
+{{CUSTOM_UTILITIES}}
+
+---
+
+## 团队约定
+
+{{TEAM_CONVENTIONS}}
+
+---
+
+## 自定义
+
+**要自定义这些规则:**
+1. 直接编辑此文件
+2. 添加项目特定模式
+3. 记录团队约定
+4. 随项目演进而更新
+
+**要重新生成:**
+运行 `/generate-rules --update-existing` 基于最新代码库分析进行更新。
+
+---
+
+**生成者:** `/generate-rules` 命令  
+**最后更新:** {{DATE}}  
+**项目复杂度:** {{COMPLEXITY}}  
+**分析日期:** {{ANALYSIS_DATE}}

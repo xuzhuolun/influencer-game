@@ -1,0 +1,331 @@
+---
+alwaysApply: true
+---
+
+# TypeScript 编码规则
+
+TypeScript 开发最佳实践，强调强类型和现代特性。
+
+## TypeScript 配置
+
+**严格模式:** 在 `tsconfig.json` 中启用严格模式
+```json
+{
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true
+  }
+}
+```
+
+---
+
+## 核心原则
+
+- **类型安全:** 充分利用 TypeScript 类型系统
+- **DRY:** 使用类型/接口避免重复
+- **KISS:** 保持类型简单清晰
+- **模块化:** 逻辑组织类型
+
+---
+
+## 类型定义
+
+### 对象使用接口
+
+**对象优先使用接口而非类型别名:**
+```typescript
+// ✅ 正确: 对象形状使用接口
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  age?: number; // 可选
+}
+
+// ✅ 正确: 联合类型/原始类型使用 type
+type Status = 'active' | 'inactive' | 'pending';
+type ID = string | number;
+```
+
+### 显式类型
+
+**函数参数和返回值使用显式类型:**
+```typescript
+// ✅ 正确: 显式类型
+function calculateTotal(items: Item[]): number {
+  return items.reduce((sum, item) => sum + item.price, 0);
+}
+
+// ❌ 错误: 隐式 any
+function calculateTotal(items) {
+  return items.reduce((sum, item) => sum + item.price, 0);
+}
+```
+
+### 避免 `any`
+
+**尽量不使用 `any`:**
+```typescript
+// ❌ 错误: 使用 any
+function processData(data: any) { }
+
+// ✅ 正确: 使用 unknown 或正确的类型
+function processData(data: unknown) {
+  if (typeof data === 'string') {
+    // TypeScript 知道这里 data 是 string
+  }
+}
+
+// ✅ 正确: 正确的类型
+function processData(data: UserData) { }
+```
+
+---
+
+## 类型推断
+
+### 清晰时让 TypeScript 推断
+
+**简单情况下类型推断是可以的:**
+```typescript
+// ✅ 正确: 类型推断
+const name = 'John'; // TypeScript 推断为 string
+const count = 42; // TypeScript 推断为 number
+const items = [1, 2, 3]; // TypeScript 推断为 number[]
+
+// ✅ 正确: 需要时显式声明
+const user: User = { id: '1', name: 'John' };
+```
+
+### 返回类型推断
+
+**清晰时让 TypeScript 推断返回类型:**
+```typescript
+// ✅ 正确: 推断的返回类型
+function add(a: number, b: number) {
+  return a + b; // TypeScript 推断为 number
+}
+
+// ✅ 正确: 复杂情况显式声明
+function processItems(items: Item[]): ProcessedItem[] {
+  // 复杂逻辑
+  return processed;
+}
+```
+
+---
+
+## 接口和类型
+
+### 接口 vs 类型
+
+**接口用于:**
+- 对象形状
+- 扩展/合并
+- 公共 API
+
+**类型用于:**
+- 联合类型
+- 交叉类型
+- 原始类型
+- 复杂类型操作
+
+**示例:**
+```typescript
+// ✅ 正确: 对象使用接口
+interface User {
+  id: string;
+  name: string;
+}
+
+// ✅ 正确: 联合使用类型
+type Status = 'active' | 'inactive';
+
+// ✅ 正确: 接口扩展
+interface AdminUser extends User {
+  permissions: string[];
+}
+```
+
+---
+
+## 泛型
+
+### 使用泛型提高复用性
+
+**创建可复用的类型安全函数:**
+```typescript
+// ✅ 正确: 泛型函数
+function getById<T>(items: T[], id: string): T | undefined {
+  return items.find(item => (item as any).id === id);
+}
+
+// 用法
+const users = getById<User>(userList, '123');
+const products = getById<Product>(productList, '456');
+```
+
+**泛型约束:**
+```typescript
+// ✅ 正确: 受约束的泛型
+interface HasId {
+  id: string;
+}
+
+function getById<T extends HasId>(items: T[], id: string): T | undefined {
+  return items.find(item => item.id === id);
+}
+```
+
+---
+
+## 枚举
+
+### 使用枚举表示常量
+
+**优先使用字符串枚举:**
+```typescript
+// ✅ 正确: 字符串枚举
+enum Status {
+  Active = 'active',
+  Inactive = 'inactive',
+  Pending = 'pending'
+}
+
+// ✅ 正确: 性能优化使用 const enum
+const enum Direction {
+  Up = 'up',
+  Down = 'down'
+}
+```
+
+**联合类型作为替代:**
+```typescript
+// ✅ 正确: 联合类型（更简单）
+type Status = 'active' | 'inactive' | 'pending';
+```
+
+---
+
+## 类
+
+### 类设计
+
+**需要时使用类:**
+```typescript
+// ✅ 正确: 带类型的类
+class UserService {
+  private users: User[] = [];
+
+  constructor(private apiClient: ApiClient) {}
+
+  async getUser(id: string): Promise<User | null> {
+    // 实现
+  }
+}
+```
+
+**访问修饰符:**
+- `public` - 默认，任何地方都可访问
+- `private` - 仅类内部可访问
+- `protected` - 类内部和子类可访问
+- `readonly` - 不可重新赋值
+
+---
+
+## 工具类型
+
+### 使用内置工具类型
+
+**利用 TypeScript 工具类型:**
+```typescript
+// Partial - 所有属性变为可选
+type PartialUser = Partial<User>;
+
+// Pick - 选择特定属性
+type UserPreview = Pick<User, 'id' | 'name'>;
+
+// Omit - 排除特定属性
+type UserWithoutEmail = Omit<User, 'email'>;
+
+// Record - 特定键值类型的对象
+type UserMap = Record<string, User>;
+```
+
+---
+
+## 错误处理
+
+### 类型化错误
+
+**为错误添加类型:**
+```typescript
+// ✅ 正确: 类型化错误
+class ValidationError extends Error {
+  constructor(
+    public field: string,
+    public message: string
+  ) {
+    super(message);
+    this.name = 'ValidationError';
+  }
+}
+
+function validateUser(user: User): void {
+  if (!user.email) {
+    throw new ValidationError('email', '邮箱是必填项');
+  }
+}
+```
+
+---
+
+## Async/Await
+
+### 类型化异步函数
+
+**正确地为异步函数添加类型:**
+```typescript
+// ✅ 正确: 类型化异步函数
+async function fetchUser(id: string): Promise<User> {
+  const response = await fetch(`/api/users/${id}`);
+  if (!response.ok) {
+    throw new Error('获取用户失败');
+  }
+  return response.json();
+}
+
+// ✅ 正确: 类型化错误处理
+async function safeFetchUser(id: string): Promise<User | null> {
+  try {
+    return await fetchUser(id);
+  } catch (error) {
+    console.error('获取用户时出错:', error);
+    return null;
+  }
+}
+```
+
+---
+
+## 最佳实践总结
+
+1. **启用严格模式** - 尽早发现错误
+2. **显式类型** - 函数参数/返回值
+3. **避免 `any`** - 使用 `unknown` 或正确类型
+4. **使用接口** - 对象形状
+5. **利用泛型** - 可复用代码
+6. **类型推断** - 类型明确时
+7. **工具类型** - 使用内置工具
+8. **类型化错误** - 为错误类添加类型
+9. **异步类型** - Promise 返回值类型
+10. **文档化复杂类型** - 注释复杂类型逻辑
+
+---
+
+**生成方式:** `/generate-rules` 命令  
+**最后更新:** {{DATE}}  
+**项目复杂度:** {{COMPLEXITY}}

@@ -1,0 +1,202 @@
+---
+description: "[L2-GameKit] CommonUI 集成规范 - UI 框架和布局管理"
+globs:
+  - "**/UI/**/*"
+  - "**/Widget*/**/*"
+  - "**/*Widget*.h"
+  - "**/*Widget*.cpp"
+alwaysApply: false
+tags: gamekit, ui, commonui, constraint
+level: L2
+scope: gamekit-framework
+---
+
+# [L2-GameKit] CommonUI 集成规范
+
+> **层级**: L2 (子系统规则)
+> **类型**: `constraint` | **适用版本**: UE5.7
+> **适用范围**: `gamekit-framework` - 使用 GameKitCore 框架的项目
+
+---
+
+## 1. UI 架构概述
+
+### [Constraint] 分层架构
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    PrimaryGameLayout                         │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │  UI_Layer_Game        (游戏 HUD)                     │   │
+│  ├──────────────────────────────────────────────────────┤   │
+│  │  UI_Layer_GameMenu    (游戏内菜单)                   │   │
+│  ├──────────────────────────────────────────────────────┤   │
+│  │  UI_Layer_Menu        (主菜单)                       │   │
+│  ├──────────────────────────────────────────────────────┤   │
+│  │  UI_Layer_Modal       (模态对话框)                   │   │
+│  └──────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 2. UI Tag 规范
+
+### [Constraint] 标准 UI Tag
+
+| Tag | 用途 | 层级 |
+|-----|------|------|
+| `UI.Layer.Game` | 游戏 HUD、状态栏 | 最底层 |
+| `UI.Layer.GameMenu` | 背包、技能面板等游戏内菜单 | 中层 |
+| `UI.Layer.Menu` | 主菜单、设置菜单 | 高层 |
+| `UI.Layer.Modal` | 确认对话框、提示框 | 最高层 |
+
+### [Constraint] Tag 命名规则
+*   **[Constraint]** 层级 Tag：`UI.Layer.[层级名]`
+*   **[Constraint]** Widget 扩展点 Tag：`UI.Extension.[位置名]`
+
+---
+
+## 3. PrimaryGameLayout 规范
+
+### [Constraint] Layout 职责
+*   **[Constraint]** PrimaryGameLayout 是所有 UI 的根容器
+*   **[Constraint]** 通过 UI Tag 管理 Widget 层级
+*   **[Constraint]** 一个 LocalPlayer 只有一个 PrimaryGameLayout
+
+### [Constraint] Layout 获取方式
+
+```cpp
+// ✅ 正确：通过 UIManagerSubsystem 获取
+UUIManagerSubsystem* UIManager = LocalPlayer->GetSubsystem<UUIManagerSubsystem>();
+UGameKitPrimaryGameLayout* Layout = UIManager->GetPrimaryGameLayout();
+
+// ❌ 错误：直接创建或缓存
+UGameKitPrimaryGameLayout* Layout = CreateWidget<UGameKitPrimaryGameLayout>(...);
+```
+
+---
+
+## 4. Widget 添加规范
+
+### [Constraint] 通过 Action 添加 Widget
+
+```cpp
+// 在 GameFeatureAction 或 ExperienceAction 中添加
+UCLASS()
+class UGameKitAction_AddWidgets : public UGameFeatureAction_WorldActionBase
+{
+    UPROPERTY(EditAnywhere)
+    TArray<FGameKitHUDLayoutRequest> Layout;
+};
+
+USTRUCT()
+struct FGameKitHUDLayoutRequest
+{
+    // Widget 类
+    UPROPERTY(EditAnywhere)
+    TSoftClassPtr<UCommonActivatableWidget> WidgetClass;
+    
+    // 添加到的层级 Tag
+    UPROPERTY(EditAnywhere)
+    FGameplayTag LayerTag;
+};
+```
+
+### [Constraint] Widget 生命周期
+*   **[Constraint]** GameFeature 停用时移除添加的 Widget
+*   **[Constraint]** Experience 切换时清理旧 Widget
+
+---
+
+## 5. CommonActivatableWidget 规范
+
+### [Constraint] 使用 CommonActivatableWidget
+*   **[Constraint]** 所有可激活的 UI 继承 `UCommonActivatableWidget`
+*   **[Constraint]** 利用 Activate/Deactivate 管理状态
+
+```cpp
+UCLASS()
+class UMyGameWidget : public UCommonActivatableWidget
+{
+    virtual void NativeOnActivated() override
+    {
+        Super::NativeOnActivated();
+        // Widget 激活时的逻辑
+    }
+    
+    virtual void NativeOnDeactivated() override
+    {
+        Super::NativeOnDeactivated();
+        // Widget 停用时的逻辑
+    }
+};
+```
+
+---
+
+## 6. UIExtension 扩展点规范
+
+### [Constraint] 扩展点用途
+- 允许 GameFeature 向已存在的 UI 添加内容
+- 无需修改基础 UI 代码
+
+### [Constraint] 扩展点定义
+
+```cpp
+// 在基础 UI 中定义扩展点
+UPROPERTY(meta = (BindWidget))
+UUIExtensionPointWidget* ExtensionPoint_ActionBar;
+
+// 配置扩展点 Tag
+ExtensionPoint_ActionBar->ExtensionPointTag = FGameplayTag::RequestGameplayTag("UI.Extension.ActionBar");
+```
+
+### [Constraint] 向扩展点添加内容
+
+```cpp
+// 在 GameFeature 中向扩展点添加 Widget
+UIExtensionSubsystem->RegisterExtensionAsWidgetForContext(
+    ExtensionPointTag,
+    PlayerController,
+    WidgetClass,
+    -1  // 排序优先级
+);
+```
+
+---
+
+## 7. 命名规范
+
+### [Constraint] Widget 类命名
+
+| 类型 | 前缀 | 示例 |
+|------|------|------|
+| 基础 Widget | `UW_` | `UW_HealthBar`, `UW_MiniMap` |
+| 屏幕/页面 | `UWS_` | `UWS_MainMenu`, `UWS_Inventory` |
+| 弹窗/对话框 | `UWD_` | `UWD_Confirm`, `UWD_Settings` |
+| Layout | - | `UGameKitPrimaryGameLayout` |
+
+### [Constraint] 资产命名
+*   **[Constraint]** Widget 蓝图：`WBP_[名称]`（如 `WBP_HealthBar`）
+
+---
+
+## ✅ 检查清单
+
+- [ ] 使用标准 UI Layer Tag
+- [ ] 通过 UIManagerSubsystem 获取 PrimaryGameLayout
+- [ ] Widget 继承 CommonActivatableWidget
+- [ ] GameFeature 停用时移除添加的 Widget
+- [ ] Widget 命名符合规范
+
+---
+
+**记住**：
+- 🎯 **分层管理**：通过 UI Tag 管理层级
+- 🎯 **扩展点模式**：无需修改基础 UI 即可扩展
+- 🎯 **生命周期闭环**：添加必有移除
+
+---
+
+**层级**: L2-GameKit | **最后更新**: 2026年2月

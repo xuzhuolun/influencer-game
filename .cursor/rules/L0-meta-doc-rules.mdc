@@ -1,0 +1,77 @@
+---
+description: "[L0-Meta] Markdown 文档编写规范 - 目录结构和文档数量限制"
+globs:
+  - "**/*.md"
+  - "**/*.mdc"
+alwaysApply: true
+tags: meta, doc, pdca
+level: L0
+scope: ue5-universal
+---
+
+# [L0-Meta] Markdown 文档编写规范
+
+> **层级**: L0 (元规则 - 管理规则的规则)
+> **类型**: `constraint` | **优先级**: 最高
+> **适用范围**: `ue5-universal` - 所有 UE5 项目通用
+
+---
+
+## 1. 目录结构规范
+
+### [Constraint] 文档根目录
+*   **[Constraint]** 所有文档必须放在 `Doc/` 目录下（项目级别）或 `{PluginName}/Doc/` 目录下（插件级别）
+*   **[Constraint]** 至少 2 级目录：`Doc/功能模块/子模块/`
+*   **[Constraint]** 最多 3 级目录嵌套
+
+```
+{ProjectRoot}/Doc/           # ← 项目文档根目录
+└─ 功能模块/                  # 一级：功能模块
+   └─ 子模块/                 # 二级：子模块
+      ├─ README.md            # 核心文档1：系统总览
+      ├─ 开发指南.md          # 核心文档2：使用指南
+      ├─ 实施清单.md          # 核心文档3：实施进度
+      ├─ 实施稿/              # 杂项文档文件夹
+      └─ UML/                 # UML 图表文件夹
+
+{PluginRoot}/Doc/            # ← 插件文档根目录（可选）
+└─ ...
+```
+
+---
+
+## 2. 核心文档规范
+
+### [Constraint] 文档数量限制
+*   **[Constraint]** 每个子模块最多只有 3 个核心文档
+*   **[Constraint]** 禁止创建第 4 个核心文档，必须合并到现有文档
+
+| 文档名 | 用途 |
+|-----|---|
+| `README.md` | 系统总览、架构设计 |
+| `开发指南.md` | 使用指南、API 说明 |
+| `实施清单.md` | 实施进度、任务清单 |
+
+---
+
+## 3. 杂项文档管理
+
+### [Constraint] 实施稿命名
+*   **[Constraint]** 格式：`YYYYMMDD_简短描述.md`
+*   **[Constraint]** 必须使用**当前系统日期**，禁止复制示例日期
+
+### [Constraint] UML 文件夹
+*   **[Constraint]** Mermaid 图表数量 ≥ 3 个，必须放在 `UML/` 文件夹
+
+---
+
+## 4. 检查清单
+
+- [ ] 文档路径在 `Doc/` 或 `{PluginName}/Doc/` 下
+- [ ] 目录结构符合规范（至少 2 级）
+- [ ] 核心文档数量不超过 3 个
+- [ ] 实施稿文档使用当前系统日期
+
+---
+
+**层级**: L0-Meta | **最后更新**: 2026年2月

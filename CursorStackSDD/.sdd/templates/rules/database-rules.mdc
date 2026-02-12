@@ -1,0 +1,246 @@
+---
+alwaysApply: true
+---
+
+# 数据库规则
+
+数据库设计、查询和管理的最佳实践。
+
+## 核心原则
+
+- **规范化:** 适当规范化
+- **索引:** 为常查询字段建立索引
+- **事务:** 使用事务确保一致性
+- **迁移:** 版本控制模式变更
+
+---
+
+## 模式设计
+
+### 规范化
+
+**适当规范化:**
+```sql
+-- ✅ 正确: 规范化
+CREATE TABLE users (
+  id INT PRIMARY KEY,
+  name VARCHAR(255),
+  email VARCHAR(255)
+);
+
+CREATE TABLE orders (
+  id INT PRIMARY KEY,
+  user_id INT REFERENCES users(id),
+  total DECIMAL(10,2)
+);
+
+-- ❌ 错误: 反规范化（除非出于性能需要）
+CREATE TABLE orders (
+  id INT PRIMARY KEY,
+  user_name VARCHAR(255), -- 应引用 users 表
+  user_email VARCHAR(255),
+  total DECIMAL(10,2)
+);
+```
+
+### 命名约定
+
+**使用一致的命名:**
+```sql
+-- ✅ 正确: 表/列使用 snake_case
+CREATE TABLE user_profiles (
+  id INT PRIMARY KEY,
+  user_id INT,
+  created_at TIMESTAMP
+);
+
+-- ✅ 正确: 表名使用复数
+CREATE TABLE users (...);
+CREATE TABLE orders (...);
+```
+
+---
+
+## 索引
+
+### 为常查询字段建立索引
+
+**创建索引用于:**
+- 主键（自动）
+- 外键
+- 常筛选的列
+- 常排序的列
+- 连接列
+
+```sql
+-- ✅ 正确: 为查询字段建立索引
+CREATE INDEX idx_user_email ON users(email);
+
+-- ✅ 正确: 为多列查询创建复合索引
+CREATE INDEX idx_order_user_date ON orders(user_id, created_at);
+```
+
+### 不要过度索引
+
+**避免不必要的索引:**
+- 索引会减慢写入速度
+- 只为查询的内容建索引
+- 监控索引使用情况
+
+---
+
+## 查询
+
+### 高效查询
+
+**只选择需要的列:**
+```sql
+-- ✅ 正确: 选择特定列
+SELECT id, name, email FROM users WHERE active = true;
+
+-- ❌ 错误: 选择全部
+SELECT * FROM users WHERE active = true;
+```
+
+### 避免 N+1 查询
+
+**使用连接或批量加载:**
+```sql
+-- ✅ 正确: 连接
+SELECT o.*, u.name, u.email
+FROM orders o
+JOIN users u ON o.user_id = u.id
+WHERE o.user_id = 123;
+
+-- ❌ 错误: N+1 查询
+SELECT * FROM orders WHERE user_id = 123;
+-- 然后对每个订单:
+SELECT * FROM users WHERE id = <order.user_id>;
+```
+
+### 使用参数化查询
+
+**防止 SQL 注入:**
+```javascript
+// ✅ 正确: 参数化
+const query = 'SELECT * FROM users WHERE id = ?';
+const user = await db.query(query, [userId]);
+
+// ❌ 错误: 字符串拼接
+const query = `SELECT * FROM users WHERE id = ${userId}`; // 有漏洞！
+```
+
+---
+
+## 事务
+
+### 使用事务
+
+**确保数据一致性:**
+```javascript
+// ✅ 正确: 事务
+await db.transaction(async (trx) => {
+  await trx('users').insert(userData);
+  await trx('profiles').insert(profileData);
+  // 两者都成功或都失败
+});
+```
+
+### 事务范围
+
+**保持事务简短:**
+- 不要长时间持有事务
+- 不要在事务中进行外部调用
+- 快速提交
+
+---
+
+## 迁移
+
+### 版本控制模式
+
+**使用迁移:**
+```javascript
+// ✅ 正确: 迁移
+exports.up = function(knex) {
+  return knex.schema.createTable('users', function(table) {
+    table.increments('id');
+    table.string('name');
+    table.string('email').unique();
+    table.timestamps();
+  });
+};
+
+exports.down = function(knex) {
+  return knex.schema.dropTable('users');
+};
+```
+
+### 迁移最佳实践
+
+- 每次迁移一个变更
+- 可逆迁移
+- 测试迁移
+- 迁移前备份
+
+---
+
+## ORM 使用
+
+### 适当时使用 ORM
+
+**ORM 优点:**
+- 类型安全
+- 查询构建器
+- 迁移支持
+- 关系管理
+
+**何时使用原生 SQL:**
+- 复杂查询
+- 性能关键
+- ORM 限制
+
+---
+
+## 性能
+
+### 查询优化
+
+**优化慢查询:**
+- 使用 EXPLAIN 分析
+- 添加索引
+- 重写低效查询
+- 使用查询缓存
+
+### 连接池
+
+**使用连接池:**
+```javascript
+// ✅ 正确: 连接池
+const pool = new Pool({
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
+});
+```
+
+---
+
+## 最佳实践总结
+
+1. **规范化** - 适当规范化
+2. **索引** - 为常查询字段建立索引
+3. **高效查询** - 只选择需要的列
+4. **参数化** - 防止 SQL 注入
+5. **事务** - 确保一致性
+6. **迁移** - 版本控制模式
+7. **ORM** - 适当时使用
+8. **优化** - 分析和优化慢查询
+9. **连接池** - 高效管理连接
+10. **备份** - 定期备份
+
+---
+
+**生成者:** `/generate-rules` 命令  
+**最后更新:** {{DATE}}  
+**项目复杂度:** {{COMPLEXITY}}

@@ -1,0 +1,290 @@
+---
+alwaysApply: true
+---
+
+# 性能规则
+
+适用于所有应用程序的性能优化最佳实践。
+
+## 核心原则
+
+- **先测量:** 优化前先进行性能分析
+- **按需优化:** 不要过早优化
+- **高效算法:** 选择适当的算法
+- **资源意识:** 注意内存、CPU、网络的使用
+
+---
+
+## 代码优化
+
+### 算法选择
+
+**选择高效的算法:**
+```javascript
+// ✅ 正确: 高效算法
+function findUser(users, userId) {
+  const userMap = new Map(users.map(u => [u.id, u]));
+  return userMap.get(userId); // O(1) 查找
+}
+
+// ❌ 错误: 低效算法
+function findUser(users, userId) {
+  return users.find(u => u.id === userId); // O(n) 查找
+}
+```
+
+### 避免不必要的工作
+
+**不要计算不需要的东西:**
+```javascript
+// ✅ 正确: 懒求值
+function getExpensiveValue() {
+  if (!needed) return null;
+  return computeExpensiveValue();
+}
+
+// ❌ 错误: 总是计算
+function getExpensiveValue() {
+  return computeExpensiveValue(); // 即使不需要也会计算
+}
+```
+
+---
+
+## 缓存
+
+### 缓存昂贵的操作
+
+**适时使用缓存:**
+```javascript
+// ✅ 正确: 记忆化
+const memoized = (() => {
+  const cache = new Map();
+  return function expensiveOperation(input) {
+    if (cache.has(input)) {
+      return cache.get(input);
+    }
+    const result = computeExpensive(input);
+    cache.set(input, result);
+    return result;
+  };
+})();
+```
+
+### 缓存失效
+
+**正确地使缓存失效:**
+```javascript
+// ✅ 正确: 带 TTL 的缓存
+class Cache {
+  constructor(ttl = 3600000) {
+    this.cache = new Map();
+    this.ttl = ttl;
+  }
+  
+  get(key) {
+    const item = this.cache.get(key);
+    if (!item) return null;
+    
+    if (Date.now() - item.timestamp > this.ttl) {
+      this.cache.delete(key);
+      return null;
+    }
+    
+    return item.value;
+  }
+}
+```
+
+---
+
+## 数据库优化
+
+### 高效查询
+
+**优化数据库查询:**
+```javascript
+// ✅ 正确: 只选择需要的字段
+const users = await db.select('id', 'name', 'email')
+  .from('users')
+  .where('active', true);
+
+// ❌ 错误: 选择所有字段
+const users = await db.select('*')
+  .from('users')
+  .where('active', true);
+```
+
+### 使用索引
+
+**为常查询字段建立索引:**
+```sql
+-- ✅ 正确: 查询字段上的索引
+CREATE INDEX idx_user_email ON users(email);
+
+-- 查询使用索引
+SELECT * FROM users WHERE email = 'user@example.com';
+```
+
+### 避免 N+1 查询
+
+**使用连接或批量加载:**
+```javascript
+// ❌ 错误: N+1 查询
+const orders = await getOrders();
+for (const order of orders) {
+  order.user = await getUser(order.userId); // N 次查询！
+}
+
+// ✅ 正确: 批量加载
+const orders = await getOrders();
+const userIds = [...new Set(orders.map(o => o.userId))];
+const users = await getUsersByIds(userIds);
+const userMap = new Map(users.map(u => [u.id, u]));
+orders.forEach(order => {
+  order.user = userMap.get(order.userId);
+});
+```
+
+---
+
+## 前端性能
+
+### 代码分割
+
+**分割代码以实现懒加载:**
+```javascript
+// ✅ 正确: 代码分割
+const HeavyComponent = lazy(() => import('./HeavyComponent'));
+
+function App() {
+  return (
+    <Suspense fallback={<Loading />}>
+      <HeavyComponent />
+    </Suspense>
+  );
+}
+```
+
+### 图片优化
+
+**优化图片:**
+- 使用适当的格式 (WebP, AVIF)
+- 懒加载图片
+- 使用响应式图片
+- 压缩图片
+
+### 打包体积
+
+**保持打包体积小:**
+- 摇树优化移除未使用代码
+- 使用动态导入
+- 避免大型依赖
+- 监控打包体积
+
+---
+
+## 内存管理
+
+### 避免内存泄漏
+
+**清理资源:**
+```javascript
+// ✅ 正确: 清理
+useEffect(() => {
+  const subscription = subscribe();
+  return () => {
+    subscription.unsubscribe(); // 清理
+  };
+}, []);
+```
+
+### 高效数据结构
+
+**选择适当的数据结构:**
+```javascript
+// ✅ 正确: Set 用于唯一性
+const uniqueIds = new Set(ids);
+
+// ✅ 正确: Map 用于键值查找
+const userMap = new Map(users.map(u => [u.id, u]));
+
+// ❌ 错误: 数组用于查找
+const user = users.find(u => u.id === userId); // O(n)
+```
+
+---
+
+## 网络优化
+
+### 最小化请求
+
+**尽可能批量请求:**
+```javascript
+// ❌ 错误: 多次请求
+for (const id of userIds) {
+  await fetchUser(id); // N 次请求
+}
+
+// ✅ 正确: 批量请求
+await fetchUsers(userIds); // 1 次请求
+```
+
+### 压缩
+
+**使用压缩:**
+```javascript
+// ✅ 正确: 启用压缩
+import compression from 'compression';
+app.use(compression());
+```
+
+### CDN 使用
+
+**对静态资源使用 CDN:**
+- 更快的传输
+- 减少服务器负载
+- 更好的缓存
+
+---
+
+## 监控
+
+### 性能指标
+
+**跟踪关键指标:**
+- 响应时间
+- 吞吐量
+- 错误率
+- 资源使用
+
+### 性能分析
+
+**优化前先分析:**
+```javascript
+// ✅ 正确: 性能分析
+console.time('operation');
+await expensiveOperation();
+console.timeEnd('operation');
+```
+
+---
+
+## 最佳实践总结
+
+1. **先测量** - 优化前先进行性能分析
+2. **高效算法** - 选择适当的算法
+3. **明智缓存** - 缓存昂贵的操作
+4. **优化查询** - 高效的数据库查询
+5. **代码分割** - 尽可能懒加载
+6. **内存管理** - 避免泄漏，及时清理
+7. **最小化请求** - 尽可能批量处理
+8. **使用压缩** - 减少有效负载大小
+9. **监控性能** - 跟踪指标
+10. **按需优化** - 不要过早优化
+
+---
+
+**生成者:** `/generate-rules` 命令  
+**最后更新:** {{DATE}}  
+**项目复杂度:** {{COMPLEXITY}}

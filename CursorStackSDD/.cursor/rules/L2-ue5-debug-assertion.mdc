@@ -1,0 +1,99 @@
+---
+description: "[L2-UE5] Check 断言使用规范 - 快速定位问题的断言策略"
+globs:
+  - "**/*.h"
+  - "**/*.cpp"
+alwaysApply: true
+tags: ue5, debug, assertion, constraint, pdca
+level: L2
+scope: ue5-universal
+---
+
+# [L2-UE5] Check 断言使用规范
+
+> **层级**: L2 (子系统规则)
+> **类型**: `constraint` | **适用版本**: UE5.7
+> **适用范围**: `ue5-universal` - 所有 UE5 项目通用
+
+---
+
+## 1. 核心理念
+
+### [Constraint] 默认使用 check
+*   **[Constraint]** 反射查找失败、回退逻辑失败时直接崩溃，立即知道问题所在
+*   **[Constraint]** 编辑器环境下始终使用 check，快速发现问题
+*   **[Constraint]** 禁止静默失败：避免 `if (nullptr) return false` 这种无声失败
+
+---
+
+## 2. Check 使用模式
+
+### [Constraint] 标准模式
+
+```cpp
+// 反射查找类
+UClass* MyClass = FindObject<UClass>(nullptr, TEXT("/Script/Module.MyClass"));
+#if WITH_EDITOR
+checkf(MyClass, TEXT("[Context] Failed to find MyClass. Make sure it's compiled."));
+#else
+extern bool GGameKitEnableStrictChecks;
+if (GGameKitEnableStrictChecks)
+{
+    checkf(MyClass, TEXT("[Context] Failed to find MyClass."));
+}
+#endif
+```
+
+---
+
+## 3. 使用场景
+
+### [Constraint] 必须使用 check 的场景
+*   **[Constraint]** 反射查找失败 → 使用 check 直接崩溃
+*   **[Constraint]** 回退逻辑失败 → 使用 check 直接崩溃
+*   **[Constraint]** 关键对象获取失败 → 使用 check 直接崩溃
+
+---
+
+## 4. Check 消息格式规范
+
+```cpp
+// ✅ 好的格式
+checkf(Condition, TEXT("[Context] Description. Additional info: %s"), *Info);
+
+// ❌ 不好的格式
+checkf(Condition, TEXT("Failed")); // 太简单，不知道上下文
+```
+
+**格式说明**：
+- **`[Context]`**：上下文标识
+- **`Description`**：错误描述
+- **`Additional info`**：额外信息
+
+---
+
+## 5. 环境配置
+
+### [Constraint] 环境约束
+*   **[Constraint]** 编辑器环境（WITH_EDITOR）：始终使用 check
+*   **[Constraint]** 非编辑器环境：通过配置项控制
+
+---
+
+## ✅ 检查清单
+
+- [ ] 错误消息包含上下文标识（`[Context]`）
+- [ ] 错误消息清晰说明问题
+- [ ] 编辑器环境使用 `#if WITH_EDITOR`
+- [ ] 非编辑器环境检查配置项
+
+---
+
+**记住**：
+- 🎯 **反射查找失败** → check 崩溃
+- 🎯 **回退逻辑失败** → check 崩溃
+- 🎯 **编辑器环境** → 始终使用 check
+
+---
+
+**层级**: L2-UE5 | **最后更新**: 2026年2月

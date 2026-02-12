@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "id": "{{TASK_ID}}",
+  "title": "{{TASK_TITLE}}",
+  "description": "{{TASK_DESCRIPTION}}",
+  "type": "{{TASK_TYPE}}",
+  "parentId": "{{PARENT_ID}}",
+  "priority": "{{PRIORITY}}",
+  "complexity": "{{COMPLEXITY}}",
+  "status": "{{STATUS}}",
+  "column": "{{COLUMN}}",
+  "dependencies": [],
+  "subtasks": [],
+  "estimatedHours": {{ESTIMATED_HOURS}},
+  "actualHours": {{ACTUAL_HOURS}},
+  "tags": [],
+  "sdd": {
+    "phase": "{{SDD_PHASE}}",
+    "commands": ["{{SDD_COMMANDS}}"],
+    "linkedSpec": null,
+    "executeCommand": "/execute-task {{TASK_ID}}",
+    "executedAt": null,
+    "completedAt": null,
+    "executedBy": null
+  },
+  "markdown": "### {{TASK_TITLE}}\n\n**描述:**\n{{TASK_DESCRIPTION}}\n\n**类型:** {{TASK_TYPE}}\n**优先级:** {{PRIORITY}}\n**复杂度:** {{COMPLEXITY}}\n\n**预估工作量:** {{ESTIMATED_HOURS}}h\n\n#### 目标\n\n- [ ] {{OBJECTIVE_1}}\n- [ ] {{OBJECTIVE_2}}\n- [ ] {{OBJECTIVE_3}}\n\n#### 验收标准\n\n1. {{CRITERIA_1}}\n2. {{CRITERIA_2}}\n3. {{CRITERIA_3}}\n\n#### 实现备注\n\n{{IMPLEMENTATION_NOTES}}\n\n#### 依赖\n\n{{DEPENDENCIES}}\n\n#### 资源\n\n- [关联规格]({{SPEC_LINK}})\n- [父任务]({{PARENT_LINK}})\n",
+  "assignee": "{{ASSIGNEE}}",
+  "reporter": "{{REPORTER}}",
+  "created": "{{CREATED_TIMESTAMP}}",
+  "updated": "{{UPDATED_TIMESTAMP}}",
+  "startedAt": null,
+  "completedAt": null,
+  "dueDate": "{{DUE_DATE}}",
+  "blockers": [],
+  "comments": [],
+  "attachments": [],
+  "history": [
+    {
+      "timestamp": "{{CREATED_TIMESTAMP}}",
+      "action": "task_created",
+      "description": "任务作为路线图的一部分创建",
+      "user": "{{USER}}"
+    }
+  ]
+}

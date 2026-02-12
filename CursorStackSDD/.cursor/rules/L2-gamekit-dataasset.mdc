@@ -1,0 +1,199 @@
+---
+description: "[L2-GameKit] DataAsset 配置规范 - 数据资产设计和管理"
+globs:
+  - "**/*.uasset"
+  - "**/Data/**/*"
+  - "**/Config/**/*"
+alwaysApply: false
+tags: gamekit, dataasset, constraint
+level: L2
+scope: gamekit-framework
+---
+
+# [L2-GameKit] DataAsset 配置规范
+
+> **层级**: L2 (子系统规则)
+> **类型**: `constraint` | **适用版本**: UE5.7
+> **适用范围**: `gamekit-framework` - 使用 GameKitCore 框架的项目
+
+---
+
+## 1. 配置化设计原则
+
+### [Constraint] 核心原则
+*   **[Constraint]** 配置优先于硬编码
+*   **[Constraint]** 数据资产定义"是什么"，代码定义"怎么做"
+*   **[Constraint]** 所有可调整的数值都应可配置
+
+---
+
+## 2. 核心 DataAsset 类型
+
+### PawnData - 角色配置
+
+```cpp
+UCLASS(BlueprintType)
+class UGameKitPawnData : public UPrimaryDataAsset
+{
+    // Pawn 类
+    UPROPERTY(EditDefaultsOnly, Category = "Pawn")
+    TSubclassOf<APawn> PawnClass;
+    
+    // 输入配置
+    UPROPERTY(EditDefaultsOnly, Category = "Input")
+    TObjectPtr<UGameKitInputConfig> InputConfig;
+    
+    // 相机配置
+    UPROPERTY(EditDefaultsOnly, Category = "Camera")
+    TObjectPtr<UGameKitCameraMode> DefaultCameraMode;
+    
+    // 初始能力集（可选）
+    UPROPERTY(EditDefaultsOnly, Category = "Abilities")
+    TArray<TObjectPtr<UGameKitAbilitySet>> AbilitySets;
+};
+```
+
+### InputConfig - 输入配置
+
+```cpp
+UCLASS(BlueprintType)
+class UGameKitInputConfig : public UDataAsset
+{
+    // InputAction 到 GameplayTag 的映射
+    UPROPERTY(EditDefaultsOnly, Category = "Input")
+    TArray<FGameKitInputAction> NativeInputActions;
+    
+    // Ability 触发的输入
+    UPROPERTY(EditDefaultsOnly, Category = "Input")
+    TArray<FGameKitInputAction> AbilityInputActions;
+};
+```
+
+---
+
+## 3. 命名规范
+
+### [Constraint] 资产命名
+
+| 类型 | 前缀 | 示例 |
+|------|------|------|
+| PawnData | `PD_` | `PD_DefaultHero`, `PD_Enemy_Goblin` |
+| InputConfig | `IC_` | `IC_Default`, `IC_Vehicle` |
+| CameraMode | `CM_` | `CM_ThirdPerson`, `CM_TopDown` |
+| AbilitySet | `AS_` | `AS_CommonAbilities`, `AS_CombatAbilities` |
+| ExperienceDefinition | `EXP_` | `EXP_MainMenu`, `EXP_Combat` |
+| GameFeatureData | `GFD_` | `GFD_Combat`, `GFD_Inventory` |
+
+### [Constraint] 存放路径
+
+```
+Content/
+├── Logic/
+│   ├── Experiences/       # Experience 资产
+│   │   └── EXP_*.uasset
+│   ├── PawnData/          # PawnData 资产
+│   │   └── PD_*.uasset
+│   ├── Input/             # 输入配置
+│   │   └── IC_*.uasset
+│   └── Camera/            # 相机配置
+│       └── CM_*.uasset
+└── Data/
+    └── DataTables/        # 数据表
+```
+
+---
+
+## 4. 软引用 vs 硬引用
+
+### [Constraint] 引用规则
+*   **[Constraint]** 大资源（Mesh、Texture、Sound）使用软引用
+*   **[Constraint]** 小配置（DataAsset、DataTable）可使用硬引用
+*   **[Constraint]** 跨模块引用优先使用软引用
+
+```cpp
+// ✅ 正确：大资源使用软引用
+UPROPERTY(EditDefaultsOnly)
+TSoftObjectPtr<USkeletalMesh> CharacterMesh;
+
+// ✅ 正确：小配置可使用硬引用
+UPROPERTY(EditDefaultsOnly)
+TObjectPtr<UGameKitInputConfig> InputConfig;
+```
+
+### [Constraint] 软引用检查（重要！）
+*   **[Constraint]** 使用 `IsNull()` 检查是否配置
+*   **[Constraint]** 禁止使用 `IsValid()` 检查软引用
+
+```cpp
+// ❌ 错误：IsValid() 会误判未加载的资产
+if (!SoftRef.IsValid()) { return; }
+
+// ✅ 正确：IsNull() 只检查是否配置
+if (SoftRef.IsNull()) { return; }
+UObject* Loaded = SoftRef.LoadSynchronous();
+```
+
+---
+
+## 5. 数据表 (DataTable) 规范
+
+### [Constraint] DataTable 使用场景
+*   **[Constraint]** 批量配置数据使用 DataTable
+*   **[Constraint]** 需要策划频繁调整的数值
+
+### [Constraint] 行结构定义
+
+```cpp
+USTRUCT(BlueprintType)
+struct FMyTableRow : public FTableRowBase
+{
+    GENERATED_BODY()
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    FName RowName;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    float Value;
+};
+```
+
+---
+
+## 6. 与 Experience/GameFeature 的关系
+
+```
+Experience
+    │
+    ├── 引用 PawnData（定义默认角色）
+    │
+    └── 引用 GameFeature（定义功能模块）
+            │
+            └── 引用 AbilitySet（定义能力）
+
+PawnData
+    │
+    ├── 引用 InputConfig（定义输入）
+    │
+    └── 引用 CameraMode（定义相机）
+```
+
+---
+
+## ✅ 检查清单
+
+- [ ] 资产命名符合前缀规范
+- [ ] 资产存放在正确的路径
+- [ ] 大资源使用软引用
+- [ ] 软引用检查使用 `IsNull()` 而非 `IsValid()`
+- [ ] 可调整的数值已配置化
+
+---
+
+**记住**：
+- 🎯 **配置优先**：数据资产定义，代码实现
+- 🎯 **命名规范**：统一前缀便于识别
+- 🎯 **软引用陷阱**：使用 IsNull() 检查
+
+---
+
+**层级**: L2-GameKit | **最后更新**: 2026年2月

@@ -1,0 +1,374 @@
+---
+alwaysApply: true
+---
+
+# React 编码规则
+
+使用 hooks、组件和现代模式的 React 开发最佳实践。
+
+## 核心原则
+
+- **函数组件:** 使用带 hooks 的函数组件
+- **DRY:** 将可复用逻辑提取到自定义 hooks
+- **KISS:** 保持组件简单专注
+- **模块化:** 每文件一个组件，清晰分离
+
+---
+
+## 组件结构
+
+### 函数组件
+
+**使用函数组件:**
+```jsx
+// ✅ 正确: 函数组件
+function UserCard({ user }) {
+  return (
+    <div className="user-card">
+      <h2>{user.name}</h2>
+      <p>{user.email}</p>
+    </div>
+  );
+}
+
+// ❌ 错误: 类组件 (除非必要)
+class UserCard extends React.Component {
+  render() {
+    return <div>{this.props.user.name}</div>;
+  }
+}
+```
+
+### 组件组织
+
+**每文件一个组件:**
+```jsx
+// ✅ 正确: UserCard.jsx
+export function UserCard({ user }) {
+  // 组件代码
+}
+
+// ✅ 正确: index.js 便于导入
+export { UserCard } from './UserCard';
+```
+
+---
+
+## Hooks
+
+### useState
+
+**使用 useState 管理本地状态:**
+```jsx
+// ✅ 正确: useState
+function Counter() {
+  const [count, setCount] = useState(0);
+  
+  return (
+    <div>
+      <p>计数: {count}</p>
+      <button onClick={() => setCount(count + 1)}>增加</button>
+    </div>
+  );
+}
+```
+
+**函数式更新:**
+```jsx
+// ✅ 正确: 需要时使用函数式更新
+setCount(prev => prev + 1);
+```
+
+### useEffect
+
+**使用 useEffect 处理副作用:**
+```jsx
+// ✅ 正确: 带清理的 useEffect
+useEffect(() => {
+  const subscription = subscribe();
+  return () => {
+    subscription.unsubscribe();
+  };
+}, [dependencies]);
+```
+
+**依赖数组:**
+```jsx
+// ✅ 正确: 包含所有依赖
+useEffect(() => {
+  fetchData(userId);
+}, [userId]); // 包含 userId
+
+// ❌ 错误: 缺少依赖
+useEffect(() => {
+  fetchData(userId);
+}, []); // 缺少 userId
+```
+
+### 自定义 Hooks
+
+**提取可复用逻辑:**
+```jsx
+// ✅ 正确: 自定义 hook
+function useUser(userId) {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    fetchUser(userId).then(setUser).finally(() => setLoading(false));
+  }, [userId]);
+  
+  return { user, loading };
+}
+
+// 使用
+function UserProfile({ userId }) {
+  const { user, loading } = useUser(userId);
+  // ...
+}
+```
+
+---
+
+## Props
+
+### Prop 类型
+
+**使用 TypeScript 或 PropTypes:**
+```tsx
+// ✅ 正确: TypeScript
+interface UserCardProps {
+  user: User;
+  onEdit?: (user: User) => void;
+}
+
+function UserCard({ user, onEdit }: UserCardProps) {
+  // ...
+}
+```
+
+**或者 PropTypes:**
+```jsx
+// ✅ 正确: PropTypes
+import PropTypes from 'prop-types';
+
+UserCard.propTypes = {
+  user: PropTypes.object.isRequired,
+  onEdit: PropTypes.func,
+};
+```
+
+### Props 解构
+
+**解构 props:**
+```jsx
+// ✅ 正确: 解构 props
+function UserCard({ user, onEdit }) {
+  // ...
+}
+
+// ❌ 错误: 通过 props 对象访问
+function UserCard(props) {
+  return <div>{props.user.name}</div>;
+}
+```
+
+---
+
+## 状态管理
+
+### 优先本地状态
+
+**尽可能使用本地状态:**
+```jsx
+// ✅ 正确: 本地状态
+function Form() {
+  const [value, setValue] = useState('');
+  // ...
+}
+```
+
+### 状态提升
+
+**需要时提升状态:**
+```jsx
+// ✅ 正确: 父组件中的共享状态
+function Parent() {
+  const [sharedState, setSharedState] = useState(null);
+  
+  return (
+    <>
+      <Child1 state={sharedState} />
+      <Child2 state={sharedState} />
+    </>
+  );
+}
+```
+
+### Context 用于全局状态
+
+**对深层嵌套状态使用 Context:**
+```jsx
+// ✅ 正确: Context
+const UserContext = createContext();
+
+function UserProvider({ children }) {
+  const [user, setUser] = useState(null);
+  return (
+    <UserContext.Provider value={{ user, setUser }}>
+      {children}
+    </UserContext.Provider>
+  );
+}
+```
+
+---
+
+## 性能
+
+### 记忆化
+
+**需要时使用 memo/useMemo/useCallback:**
+```jsx
+// ✅ 正确: 昂贵组件使用 memo
+const ExpensiveComponent = memo(function ExpensiveComponent({ data }) {
+  // 昂贵的渲染
+});
+
+// ✅ 正确: 昂贵计算使用 useMemo
+const expensiveValue = useMemo(() => {
+  return computeExpensiveValue(data);
+}, [data]);
+
+// ✅ 正确: 稳定函数引用使用 useCallback
+const handleClick = useCallback(() => {
+  doSomething(id);
+}, [id]);
+```
+
+**不要过度使用:**
+```jsx
+// ❌ 错误: 不必要的记忆化
+const SimpleComponent = memo(function SimpleComponent({ name }) {
+  return <div>{name}</div>; // 太简单不需要记忆化
+});
+```
+
+### 代码分割
+
+**懒加载组件:**
+```jsx
+// ✅ 正确: 懒加载
+const HeavyComponent = lazy(() => import('./HeavyComponent'));
+
+function App() {
+  return (
+    <Suspense fallback={<Loading />}>
+      <HeavyComponent />
+    </Suspense>
+  );
+}
+```
+
+---
+
+## 事件处理
+
+### 命名
+
+**使用 handle 前缀:**
+```jsx
+// ✅ 正确: handle 前缀
+function Button({ onClick }) {
+  const handleClick = () => {
+    onClick();
+  };
+  
+  return <button onClick={handleClick}>点击</button>;
+}
+```
+
+### 事件处理
+
+**提取处理函数:**
+```jsx
+// ✅ 正确: 提取的处理函数
+function Form() {
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // 提交逻辑
+  };
+  
+  return <form onSubmit={handleSubmit}>...</form>;
+}
+```
+
+---
+
+## 条件渲染
+
+### 清晰的条件
+
+**使用清晰的条件渲染:**
+```jsx
+// ✅ 正确: 清晰的条件
+function UserProfile({ user }) {
+  if (!user) return <div>加载中...</div>;
+  
+  return (
+    <div>
+      <h1>{user.name}</h1>
+      {user.isAdmin && <AdminPanel />}
+      {user.email && <p>{user.email}</p>}
+    </div>
+  );
+}
+```
+
+**避免复杂的三元运算:**
+```jsx
+// ❌ 错误: 复杂三元运算
+{condition1 ? (condition2 ? <A /> : <B />) : (condition3 ? <C /> : <D />)}
+
+// ✅ 正确: 提取到函数或使用 if/else
+```
+
+---
+
+## 列表和 Keys
+
+### Keys
+
+**使用稳定、唯一的 keys:**
+```jsx
+// ✅ 正确: 唯一 key
+{users.map(user => (
+  <UserCard key={user.id} user={user} />
+))}
+
+// ❌ 错误: 索引作为 key (除非列表是静态的)
+{users.map((user, index) => (
+  <UserCard key={index} user={user} />
+))}
+```
+
+---
+
+## 最佳实践总结
+
+1. **函数组件** - 使用 hooks，而非类
+2. **自定义 Hooks** - 提取可复用逻辑
+3. **正确的依赖** - 包含所有 useEffect 依赖
+4. **记忆化** - 性能需要时使用
+5. **代码分割** - 懒加载重型组件
+6. **类型安全** - 使用 TypeScript 或 PropTypes
+7. **清晰的 Props** - 解构并定义类型
+8. **状态管理** - 优先本地状态，需要时提升
+9. **事件处理** - 提取并清晰命名
+10. **Keys** - 列表使用稳定、唯一的 keys
+
+---
+
+**生成者:** `/generate-rules` 命令  
+**最后更新:** {{DATE}}  
+**项目复杂度:** {{COMPLEXITY}}

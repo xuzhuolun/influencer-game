@@ -13,7 +13,7 @@ class UIController {
             el.addEventListener(eventName, handler);
         };
 
-        // 绑定起名界面事件
+        // ---------- 创角模块：起名界面 ----------
         bind('confirm-name-btn', 'click', () => this.handleNameConfirm());
         bind('influencer-name', 'input', () => this.validateName());
         bind('roll-attr-btn', 'click', () => this.handleRollAttributes());
@@ -22,13 +22,13 @@ class UIController {
             radio.addEventListener('change', () => this.handleGenderChange());
         });
         
-        // 绑定主游戏界面事件
+        // ---------- 主游戏模块：状态栏与行动 Tab ----------
         bind('next-month-btn', 'click', () => this.handleMonthEnd());
         bind('save-btn', 'click', () => this.handleSave());
         bind('menu-btn', 'click', () => this.showMenu());
         bind('help-btn', 'click', () => this.showHelp());
         
-        // 绑定弹窗事件
+        // ---------- 全局弹窗模块 ----------
         bind('monthly-confirm-btn', 'click', () => this.closeMonthlyModal());
         bind('restart-btn', 'click', () => this.restartGame());
         bind('close-menu-btn', 'click', () => this.closeMenu());
@@ -64,14 +64,18 @@ class UIController {
         this.showIntroModal();
     }
 
-    // 切换屏幕
+    /**
+     * 切换屏幕（创角流程：naming-screen | category-screen | platform-screen | main-game-screen）
+     */
     switchScreen(screenId) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.getElementById(screenId).classList.add('active');
         this.currentScreen = screenId;
     }
 
-    // 切换主游戏页签（个人主页 / 消息 / 行动）
+    /**
+     * 切换主游戏页签（tab-profile 个人主页 | tab-messages 消息 | tab-actions 行动）
+     */
     switchMainTab(tabId) {
         document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.bottom-tab-item').forEach(b => b.classList.remove('active'));

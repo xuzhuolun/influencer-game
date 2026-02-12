@@ -1,0 +1,368 @@
+---
+alwaysApply: true
+---
+
+# 安全规则
+
+适用于所有应用程序和语言的安全最佳实践。
+
+## 核心原则
+
+- **永不信任输入:** 验证和净化所有输入
+- **最小权限:** 授予最小必要权限
+- **纵深防御:** 多层安全防护
+- **安全设计:** 从一开始就构建安全性
+
+---
+
+## 输入验证
+
+### 验证所有输入
+
+**永不信任用户输入:**
+```javascript
+// ✅ 正确: 验证输入
+function processUserInput(input) {
+  if (typeof input !== 'string' || input.length === 0) {
+    throw new ValidationError('无效输入');
+  }
+  
+  // 净化
+  const sanitized = input.trim().replace(/[<>]/g, '');
+  
+  return sanitized;
+}
+
+// ❌ 错误: 信任输入
+function processUserInput(input) {
+  return input; // 危险！
+}
+```
+
+### 类型验证
+
+**检查类型:**
+```javascript
+// ✅ 正确: 类型检查
+function calculateTotal(items) {
+  if (!Array.isArray(items)) {
+    throw new TypeError('Items 必须是数组');
+  }
+  
+  return items.reduce((sum, item) => {
+    if (typeof item.price !== 'number' || item.price < 0) {
+      throw new ValidationError('无效价格');
+    }
+    return sum + item.price;
+  }, 0);
+}
+```
+
+### 净化
+
+**使用前净化:**
+```javascript
+// ✅ 正确: 净化 HTML
+function sanitizeHtml(input) {
+  return input
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+```
+
+---
+
+## 身份验证
+
+### 安全的身份验证
+
+**使用经过验证的身份验证方法:**
+```javascript
+// ✅ 正确: 使用安全库
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+
+async function authenticateUser(email, password) {
+  const user = await findUserByEmail(email);
+  if (!user) throw new Error('凭据无效');
+  
+  const isValid = await bcrypt.compare(password, user.passwordHash);
+  if (!isValid) throw new Error('凭据无效');
+  
+  const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
+    expiresIn: '1h'
+  });
+  
+  return token;
+}
+```
+
+### 密码安全
+
+**正确哈希密码:**
+```javascript
+// ✅ 正确: 哈希密码
+const saltRounds = 10;
+const passwordHash = await bcrypt.hash(password, saltRounds);
+
+// ❌ 错误: 明文或弱哈希
+const passwordHash = password; // 永远不要！
+const passwordHash = md5(password); // 太弱！
+```
+
+### 令牌安全
+
+**安全的令牌存储:**
+```javascript
+// ✅ 正确: HttpOnly cookies
+res.cookie('token', token, {
+  httpOnly: true, // JavaScript 无法访问
+  secure: true,   // 仅 HTTPS
+  sameSite: 'strict'
+});
+
+// ❌ 错误: localStorage (有 XSS 漏洞)
+localStorage.setItem('token', token);
+```
+
+---
+
+## 授权
+
+### 检查权限
+
+**始终验证权限:**
+```javascript
+// ✅ 正确: 检查权限
+async function deleteUser(userId, requesterId) {
+  const requester = await getUser(requesterId);
+  
+  if (!requester.isAdmin && requester.id !== userId) {
+    throw new AuthorizationError('未授权');
+  }
+  
+  await deleteUserById(userId);
+}
+
+// ❌ 错误: 无权限检查
+async function deleteUser(userId) {
+  await deleteUserById(userId); // 任何人都可以删除！
+}
+```
+
+### 最小权限
+
+**授予最小权限:**
+```javascript
+// ✅ 正确: 最小权限
+const permissions = {
+  read: user.role === 'user' || user.role === 'admin',
+  write: user.role === 'admin',
+  delete: user.role === 'admin'
+};
+
+// ❌ 错误: 过度授权
+const permissions = {
+  read: true,
+  write: true,
+  delete: true // 权限太大！
+};
+```
+
+---
+
+## SQL 注入防护
+
+### 参数化查询
+
+**使用参数化查询:**
+```javascript
+// ✅ 正确: 参数化查询
+const query = 'SELECT * FROM users WHERE id = ?';
+const user = await db.query(query, [userId]);
+
+// ❌ 错误: 字符串拼接
+const query = `SELECT * FROM users WHERE id = ${userId}`; // 有漏洞！
+```
+
+### ORM 使用
+
+**尽可能使用 ORM:**
+```javascript
+// ✅ 正确: ORM (安全)
+const user = await User.findById(userId);
+
+// ✅ 正确: 查询构建器
+const user = await db('users').where('id', userId).first();
+```
+
+---
+
+## XSS 防护
+
+### 转义输出
+
+**转义用户生成的内容:**
+```javascript
+// ✅ 正确: 转义输出
+function renderUserContent(content) {
+  const escaped = content
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+  
+  return escaped;
+}
+```
+
+### 内容安全策略
+
+**使用 CSP 头:**
+```javascript
+// ✅ 正确: CSP 头
+app.use((req, res, next) => {
+  res.setHeader('Content-Security-Policy', 
+    "default-src 'self'; script-src 'self'");
+  next();
+});
+```
+
+---
+
+## CSRF 防护
+
+### CSRF 令牌
+
+**使用 CSRF 令牌:**
+```javascript
+// ✅ 正确: CSRF 防护
+import csrf from 'csurf';
+
+app.use(csrf());
+
+app.post('/api/users', (req, res) => {
+  // CSRF 令牌自动验证
+  // ...
+});
+```
+
+---
+
+## 密钥管理
+
+### 环境变量
+
+**永不提交密钥:**
+```javascript
+// ✅ 正确: 环境变量
+const dbPassword = process.env.DB_PASSWORD;
+const apiKey = process.env.API_KEY;
+
+// ❌ 错误: 硬编码密钥
+const dbPassword = 'mysecretpassword'; // 永远不要！
+const apiKey = 'sk-1234567890'; // 永远不要！
+```
+
+### 密钥存储
+
+**使用安全的密钥存储:**
+- 环境变量 (开发环境)
+- 密钥管理服务 (生产环境)
+- 加密的配置文件
+- 永远不要放入版本控制
+
+---
+
+## HTTPS
+
+### 始终使用 HTTPS
+
+**生产环境强制 HTTPS:**
+```javascript
+// ✅ 正确: HTTPS 重定向
+if (process.env.NODE_ENV === 'production') {
+  app.use((req, res, next) => {
+    if (req.header('x-forwarded-proto') !== 'https') {
+      res.redirect(`https://${req.header('host')}${req.url}`);
+    } else {
+      next();
+    }
+  });
+}
+```
+
+---
+
+## 依赖安全
+
+### 更新依赖
+
+**保持依赖更新:**
+```bash
+# 检查漏洞
+npm audit
+
+# 修复漏洞
+npm audit fix
+
+# 更新依赖
+npm update
+```
+
+### 审查依赖
+
+**添加前审查:**
+- 检查包的流行度
+- 审查安全历史
+- 检查维护状态
+- 尽可能审查源代码
+
+---
+
+## 错误处理
+
+### 不要暴露内部信息
+
+**通用错误消息:**
+```javascript
+// ✅ 正确: 通用错误
+try {
+  await authenticateUser(email, password);
+} catch (error) {
+  // 内部记录完整错误
+  logger.error('身份验证失败', error);
+  
+  // 给用户的通用消息
+  throw new Error('凭据无效');
+}
+
+// ❌ 错误: 暴露内部信息
+catch (error) {
+  throw new Error(`数据库错误: ${error.message}`); // 暴露了数据库！
+}
+```
+
+---
+
+## 最佳实践总结
+
+1. **验证输入** - 永不信任用户输入
+2. **安全身份验证** - 使用经过验证的方法
+3. **检查权限** - 始终验证授权
+4. **参数化查询** - 防止 SQL 注入
+5. **转义输出** - 防止 XSS
+6. **CSRF 防护** - 使用令牌
+7. **密钥管理** - 永不提交密钥
+8. **HTTPS** - 生产环境必须使用
+9. **更新依赖** - 保持安全
+10. **通用错误** - 不要暴露内部信息
+
+---
+
+**生成者:** `/generate-rules` 命令  
+**最后更新:** {{DATE}}  
+**项目复杂度:** {{COMPLEXITY}}

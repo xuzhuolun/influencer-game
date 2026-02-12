@@ -1,0 +1,442 @@
+---
+alwaysApply: true
+---
+
+# JavaScript 编码规则
+
+遵循 10X 开发原则的 JavaScript 开发最佳实践和约定。
+
+## 语言版本
+
+**目标:** ES6+ (ES2015 及更高版本)  
+**使用现代特性:** 优先使用现代 JavaScript 特性
+
+---
+
+## 核心原则
+
+- **DRY:** 提取公共逻辑，复用函数
+- **KISS:** 优先选择简单、可读的方案
+- **模块化:** 使用模块，避免全局作用域
+
+---
+
+## 现代 JavaScript 特性
+
+### 使用 ES6+ 语法
+
+**优先使用:**
+- `const` 和 `let` 替代 `var`
+- 回调使用箭头函数
+- 模板字符串替代字符串拼接
+- 对象/数组访问使用解构
+- 数组/对象使用展开运算符
+- 默认参数
+- 剩余参数
+
+**示例:**
+```javascript
+// ✅ 正确: 现代语法
+const user = { name: 'John', age: 30 };
+const { name, age } = user; // 解构
+const greet = (name = '访客') => `你好, ${name}!`; // 箭头 + 默认 + 模板
+
+// ❌ 错误: 旧语法
+var user = { name: 'John', age: 30 };
+var name = user.name;
+var age = user.age;
+function greet(name) {
+  if (!name) name = '访客';
+  return '你好, ' + name + '!';
+}
+```
+
+### Async/Await
+
+**优先使用 async/await 而非 Promises:**
+```javascript
+// ✅ 正确: async/await
+async function fetchUser(id) {
+  try {
+    const response = await fetch(`/api/users/${id}`);
+    const user = await response.json();
+    return user;
+  } catch (error) {
+    console.error('获取用户失败:', error);
+    throw error;
+  }
+}
+
+// ❌ 错误: Promise 链
+function fetchUser(id) {
+  return fetch(`/api/users/${id}`)
+    .then(response => response.json())
+    .then(user => user)
+    .catch(error => {
+      console.error('获取用户失败:', error);
+      throw error;
+    });
+}
+```
+
+---
+
+## 代码组织
+
+### 文件结构
+
+**按功能或类型组织:**
+```
+src/
+├── components/     # UI 组件
+├── utils/         # 工具函数
+├── services/       # API/服务
+├── hooks/          # 自定义 hooks (如果是 React)
+├── constants/      # 常量
+└── types/          # 类型定义 (如果是 TypeScript)
+```
+
+### 导入/导出
+
+**使用 ES6 模块:**
+```javascript
+// ✅ 正确: 命名导出
+export function calculateTotal(items) { }
+export const TAX_RATE = 0.1;
+
+// 导入
+import { calculateTotal, TAX_RATE } from './utils';
+
+// ✅ 正确: 默认导出 (用于主导出)
+export default class UserService { }
+
+// 导入
+import UserService from './services/UserService';
+```
+
+**组织导入:**
+```javascript
+// 1. 外部依赖
+import React from 'react';
+import axios from 'axios';
+
+// 2. 内部模块
+import { calculateTotal } from './utils';
+import UserService from './services/UserService';
+
+// 3. 类型 (如果是 TypeScript)
+import type { User } from './types';
+```
+
+---
+
+## 命名约定
+
+### 变量和函数
+
+**变量和函数使用 camelCase:**
+```javascript
+const userName = 'John';
+const isActive = true;
+function calculateTotal() { }
+```
+
+**类和构造函数使用 PascalCase:**
+```javascript
+class UserService { }
+function User(name) { this.name = name; }
+```
+
+**常量使用 UPPER_SNAKE_CASE:**
+```javascript
+const MAX_RETRIES = 3;
+const API_BASE_URL = 'https://api.example.com';
+```
+
+**描述性命名:**
+```javascript
+// ✅ 正确: 描述性
+const userAccountBalance = 1000;
+function calculateOrderTotal(orderItems) { }
+
+// ❌ 错误: 不清晰
+const bal = 1000;
+function calc(items) { }
+```
+
+---
+
+## 函数
+
+### 函数设计
+
+**小而专注的函数:**
+```javascript
+// ✅ 正确: 单一职责
+function calculateItemTotal(item) {
+  return item.price * item.quantity;
+}
+
+function calculateOrderTotal(items) {
+  return items.reduce((sum, item) => sum + calculateItemTotal(item), 0);
+}
+
+// ❌ 错误: 做太多事
+function processOrder(order) {
+  // 验证、计算、保存、发邮件、记日志...
+}
+```
+
+**尽可能使用纯函数:**
+```javascript
+// ✅ 正确: 纯函数
+function add(a, b) {
+  return a + b;
+}
+
+// ✅ 正确: 副作用隔离
+function logMessage(message) {
+  console.log(message); // 副作用，但已隔离
+}
+```
+
+### 箭头函数
+
+**回调使用箭头函数:**
+```javascript
+// ✅ 正确: 箭头函数
+const numbers = [1, 2, 3];
+const doubled = numbers.map(n => n * 2);
+const filtered = numbers.filter(n => n > 1);
+
+// ❌ 错误: 函数表达式
+const doubled = numbers.map(function(n) { return n * 2; });
+```
+
+**方法使用普通函数:**
+```javascript
+// ✅ 正确: 方法使用普通函数
+const obj = {
+  name: 'John',
+  greet() {
+    return `你好, ${this.name}`;
+  }
+};
+```
+
+---
+
+## 对象和数组
+
+### 对象创建
+
+**使用对象字面量:**
+```javascript
+// ✅ 正确: 对象字面量
+const user = {
+  name: 'John',
+  age: 30,
+  email: 'john@example.com'
+};
+
+// ❌ 错误: Object 构造函数
+const user = new Object();
+user.name = 'John';
+```
+
+**使用对象展开:**
+```javascript
+// ✅ 正确: 展开运算符
+const updatedUser = { ...user, age: 31 };
+
+// ❌ 错误: Object.assign
+const updatedUser = Object.assign({}, user, { age: 31 });
+```
+
+### 数组方法
+
+**优先使用函数式数组方法:**
+```javascript
+// ✅ 正确: map, filter, reduce
+const doubled = numbers.map(n => n * 2);
+const evens = numbers.filter(n => n % 2 === 0);
+const sum = numbers.reduce((acc, n) => acc + n, 0);
+
+// ❌ 错误: 函数式方法能解决时使用循环
+const doubled = [];
+for (let i = 0; i < numbers.length; i++) {
+  doubled.push(numbers[i] * 2);
+}
+```
+
+---
+
+## 错误处理
+
+### Try-Catch
+
+**始终处理错误:**
+```javascript
+// ✅ 正确: 错误处理
+async function fetchData(url) {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP 错误! 状态码: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('获取数据失败:', error);
+    throw error; // 重新抛出或适当处理
+  }
+}
+```
+
+**不要忽略错误:**
+```javascript
+// ❌ 错误: 静默失败
+try {
+  riskyOperation();
+} catch (error) {
+  // 被忽略 - 不好！
+}
+```
+
+### 错误类型
+
+**使用适当的错误类型:**
+```javascript
+// ✅ 正确: 特定错误
+if (!user) {
+  throw new Error('未找到用户');
+}
+
+if (invalidInput) {
+  throw new TypeError('无效的输入类型');
+}
+```
+
+---
+
+## 性能
+
+### 优化
+
+**避免过早优化，但需注意:**
+- 使用适当的数据结构
+- 避免不必要的计算
+- 缓存昂贵的操作
+- 尽可能懒加载
+
+**示例:**
+```javascript
+// ✅ 正确: 昂贵操作使用记忆化
+const memoized = (() => {
+  const cache = {};
+  return function expensiveOperation(input) {
+    if (cache[input]) return cache[input];
+    const result = /* 昂贵的计算 */;
+    cache[input] = result;
+    return result;
+  };
+})();
+```
+
+---
+
+## 安全
+
+### 输入验证
+
+**始终验证输入:**
+```javascript
+// ✅ 正确: 验证输入
+function processUserInput(input) {
+  if (typeof input !== 'string' || input.length === 0) {
+    throw new Error('无效输入');
+  }
+  // 如需要则净化
+  return input.trim();
+}
+```
+
+### 避免 Eval
+
+**永远不要使用 eval:**
+```javascript
+// ❌ 错误: eval 是危险的
+eval(userInput);
+
+// ✅ 正确: 安全的替代方案
+JSON.parse(userInput); // 如果是 JSON
+// 或者适当的解析/验证
+```
+
+---
+
+## 测试
+
+### 测试结构
+
+**清晰地组织测试:**
+```javascript
+describe('calculateTotal', () => {
+  it('应该计算多个商品的总价', () => {
+    const items = [
+      { price: 10, quantity: 2 },
+      { price: 5, quantity: 3 }
+    ];
+    expect(calculateTotal(items)).toBe(35);
+  });
+
+  it('空数组应返回 0', () => {
+    expect(calculateTotal([])).toBe(0);
+  });
+});
+```
+
+---
+
+## 代码风格
+
+### 格式化
+
+**遵循项目风格指南:**
+- 使用一致的缩进 (推荐 2 空格)
+- 一致地使用分号
+- 最大行长度: 100-120 字符
+- 数组/对象使用尾随逗号
+
+### 注释
+
+**注释说明为什么，而非是什么:**
+```javascript
+// ✅ 正确: 解释为什么
+// 使用防抖避免快速输入时过多的 API 调用
+const debouncedSearch = debounce(handleSearch, 300);
+
+// ❌ 错误: 解释是什么 (代码已经说明)
+// 这个函数计算总价
+function calculateTotal(items) { }
+```
+
+---
+
+## 最佳实践总结
+
+1. **使用现代 JavaScript** - ES6+ 特性
+2. **优先 const/let** - 避免 var
+3. **使用 async/await** - 替代 Promise 链
+4. **小函数** - 单一职责
+5. **描述性命名** - 清晰的意图
+6. **处理错误** - 始终捕获和处理
+7. **验证输入** - 永远不要信任用户输入
+8. **测试代码** - 编写测试
+9. **记录复杂逻辑** - 注释说明原因
+10. **遵循项目风格** - 一致性很重要
+
+---
+
+**生成者:** `/generate-rules` 命令  
+**最后更新:** {{DATE}}  
+**项目复杂度:** {{COMPLEXITY}}

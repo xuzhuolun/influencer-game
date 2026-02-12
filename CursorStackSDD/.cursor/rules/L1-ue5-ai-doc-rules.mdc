@@ -1,0 +1,99 @@
+---
+description: "[L1-UE5] 引擎AI文档编写规范 - 模块文档编写和质量标准"
+globs:
+  - "UE5_7/**/*.md"
+alwaysApply: false
+tags: ue5, doc, pdca
+level: L1
+scope: ue5-universal
+---
+
+# [L1-UE5] 引擎AI文档编写规范
+
+> **层级**: L1 (通用工程规则)
+> **类型**: `constraint` | **适用版本**: UE5.7
+> **适用范围**: `ue5-universal` - 所有 UE5 项目通用
+
+## 🎯 核心目标
+
+**让每个开发者都能借助AI达到主程级别的引擎理解能力**
+
+---
+
+## 1. 深度分析要求（必须遵守）
+
+### [Constraint] 编写文档前必须完成的源码分析步骤
+
+1. **目录结构分析**: 使用 `list_dir` 查看模块完整目录结构
+2. **Build.cs 分析**: 读取模块依赖配置
+3. **核心头文件分析**: 读取 2-3 个关键头文件理解核心机制
+4. **精髓提炼**: 基于源码分析，提炼核心设计模式
+
+---
+
+## 2. 关键源码文件规范
+
+### [Constraint] 文件列表要求
+*   **[Constraint]** 列出所有 Public/ 下的重要头文件
+*   **[Constraint]** Private/ 下的关键实现文件要具体到文件名
+*   **[Constraint]** 不能只写目录名如 `Private/Tests/`
+
+```markdown
+| `Public/BTBuilder.h` | 【核心】行为树程序化构建器 |
+| `Private/Tests/BTTest.cpp` | 行为树节点执行测试用例 |
+```
+
+---
+
+## 3. 关键机制规范
+
+### [Constraint] 关键机制要求
+*   **[Constraint]** 必须提到核心类名（如 FBTBuilder、UMockAI）
+*   **[Constraint]** 必须说明核心方法（如 CreateBehaviorTree、AddSelector）
+*   **[Constraint]** 必须解释设计模式（如程序化构建、链式调用）
+*   **[Constraint]** 不能只写"提供XX功能"这种泛泛描述
+
+---
+
+## 4. 文档目录结构
+
+```
+UE5_7/
+├── README.md                    # 项目总览
+├── AIRules.md                   # AI工作流规则
+├── 引擎目录检索.md              # 模块快速检索入口
+├── EngineCode/                  # 引擎源码（只读参考）
+└── UE5_7AI检索文档/              # 【核心文档目录】
+    ├── Source/Runtime/          # 运行时模块文档
+    ├── Source/Editor/           # 编辑器模块文档
+    └── Plugins/                 # 插件文档
+```
+
+---
+
+## 5. 文档编写工作流
+
+### [Workflow] 单个模块的完整工作流
+```
+步骤1: list_dir 目录分析
+步骤2: read_file Build.cs 依赖分析
+步骤3: read_file 核心头文件分析
+步骤4: 按模板结构编写文档
+步骤5: 对照检查清单质量自检
+步骤6: 写入 UE5_7/UE5_7AI检索文档/
+```
+
+---
+
+## ✅ 文档质量检查清单
+
+### 🔍 深度检查（最重要！）
+- [ ] **已执行 list_dir** 查看完整目录结构
+- [ ] **已读取 Build.cs** 验证依赖关系
+- [ ] **已读取 2-3 个核心头文件** 理解关键机制
+- [ ] **关键源码文件** 具体到文件名，不是目录名
+- [ ] **关键机制** 提到了核心类名和方法名
+
+---
+
+**层级**: L1-UE5 | **最后更新**: 2026年2月

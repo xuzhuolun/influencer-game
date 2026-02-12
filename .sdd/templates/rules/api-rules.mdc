@@ -1,0 +1,226 @@
+---
+alwaysApply: true
+---
+
+# API 设计规则
+
+设计和实现 RESTful 和 GraphQL API 的最佳实践。
+
+## 核心原则
+
+- **RESTful:** 遵循 REST 约定
+- **一致性:** 一致的命名和结构
+- **版本化:** 为 API 添加版本
+- **文档化:** 清晰的 API 文档
+
+---
+
+## RESTful 设计
+
+### 基于资源的 URL
+
+**使用基于资源的 URL:**
+```javascript
+// ✅ 正确: 基于资源
+GET    /api/users
+GET    /api/users/123
+POST   /api/users
+PUT    /api/users/123
+DELETE /api/users/123
+
+// ❌ 错误: 基于动作
+GET /api/getUsers
+POST /api/createUser
+POST /api/deleteUser
+```
+
+### HTTP 方法
+
+**使用适当的 HTTP 方法:**
+- `GET` - 获取资源
+- `POST` - 创建资源
+- `PUT` - 更新整个资源
+- `PATCH` - 部分更新
+- `DELETE` - 删除资源
+
+### 状态码
+
+**使用适当的状态码:**
+```javascript
+// ✅ 正确: 合适的状态码
+res.status(200).json(data);        // 成功
+res.status(201).json(data);        // 已创建
+res.status(204).send();            // 无内容
+res.status(400).json({ error });   // 错误请求
+res.status(401).json({ error });   // 未授权
+res.status(404).json({ error });   // 未找到
+res.status(500).json({ error });   // 服务器错误
+```
+
+---
+
+## 请求/响应格式
+
+### 一致的结构
+
+**使用一致的响应格式:**
+```javascript
+// ✅ 正确: 一致的格式
+{
+  "data": {
+    "id": 123,
+    "name": "John"
+  },
+  "meta": {
+    "timestamp": "2025-01-01T00:00:00Z"
+  }
+}
+
+// 错误格式
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "无效输入",
+    "details": { }
+  }
+}
+```
+
+### 分页
+
+**实现分页:**
+```javascript
+// ✅ 正确: 分页
+GET /api/users?page=1&limit=20
+
+响应:
+{
+  "data": [...],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 100,
+    "pages": 5
+  }
+}
+```
+
+---
+
+## 版本控制
+
+### API 版本化
+
+**为 API 添加版本:**
+```javascript
+// ✅ 正确: URL 中的版本
+/api/v1/users
+/api/v2/users
+
+// ✅ 正确: 请求头中的版本
+Accept: application/vnd.api+json;version=1
+```
+
+---
+
+## 错误处理
+
+### 一致的错误格式
+
+**使用一致的错误响应:**
+```javascript
+// ✅ 正确: 一致的错误
+{
+  "error": {
+    "code": "USER_NOT_FOUND",
+    "message": "未找到 ID 为 123 的用户",
+    "details": {
+      "userId": 123
+    }
+  }
+}
+```
+
+### 错误代码
+
+**使用有意义的错误代码:**
+- `VALIDATION_ERROR` - 输入验证失败
+- `NOT_FOUND` - 资源未找到
+- `UNAUTHORIZED` - 需要身份验证
+- `FORBIDDEN` - 权限不足
+- `CONFLICT` - 资源冲突
+- `SERVER_ERROR` - 内部服务器错误
+
+---
+
+## 身份验证
+
+### 基于令牌的认证
+
+**使用令牌进行身份验证:**
+```javascript
+// ✅ 正确: Bearer 令牌
+Authorization: Bearer <token>
+
+// 验证令牌
+const token = req.headers.authorization?.replace('Bearer ', '');
+const user = await validateToken(token);
+```
+
+---
+
+## 速率限制
+
+### 实现速率限制
+
+**保护 API 免受滥用:**
+```javascript
+// ✅ 正确: 速率限制
+import rateLimit from 'express-rate-limit';
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 分钟
+  max: 100 // 每个 IP 在每个时间窗口内最多 100 个请求
+});
+
+app.use('/api/', limiter);
+```
+
+---
+
+## 文档
+
+### API 文档
+
+**为 API 编写文档:**
+- 端点描述
+- 请求/响应示例
+- 错误响应
+- 身份验证要求
+- 速率限制
+
+**工具:**
+- OpenAPI/Swagger
+- Postman 集合
+- API Blueprint
+
+---
+
+## 最佳实践总结
+
+1. **RESTful URL** - 基于资源，而非基于动作
+2. **HTTP 方法** - 使用适当的方法
+3. **状态码** - 正确的状态码
+4. **一致的格式** - 所有响应相同的结构
+5. **分页** - 为列表端点实现分页
+6. **版本控制** - 为 API 添加版本
+7. **错误处理** - 一致的错误格式
+8. **身份验证** - 安全的基于令牌的认证
+9. **速率限制** - 防止滥用
+10. **文档** - 清晰的 API 文档
+
+---
+
+**生成者:** `/generate-rules` 命令  
+**最后更新:** {{DATE}}  
+**项目复杂度:** {{COMPLEXITY}}

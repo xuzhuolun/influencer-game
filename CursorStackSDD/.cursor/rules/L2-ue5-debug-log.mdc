@@ -1,0 +1,96 @@
+---
+description: "[L2-UE5] 日志调试规范 - UE_LOG 标准使用和关键字标记"
+globs:
+  - "**/*.cpp"
+  - "**/*.h"
+alwaysApply: true
+tags: ue5, debug, log, constraint, pdca
+level: L2
+scope: ue5-universal
+---
+
+# [L2-UE5] 日志调试规范
+
+> **层级**: L2 (子系统规则)
+> **类型**: `constraint` | **适用版本**: UE5.7
+> **适用范围**: `ue5-universal` - 所有 UE5 项目通用
+
+---
+
+## 1. 核心理念
+
+### [Constraint] 日志标准
+*   **[Constraint]** 统一使用 UE_LOG，充分利用引擎过滤器功能
+*   **[Constraint]** 每个功能模块使用独立的 LogCategory
+*   **[Constraint]** 同样的功能使用统一的 `[关键字]` 标记
+
+---
+
+## 2. LogCategory 声明规范
+
+```cpp
+// 在模块的 LogChannels.h 中声明
+DECLARE_LOG_CATEGORY_EXTERN(LogGameKitGAS, Log, All);
+
+// 在对应的 .cpp 中定义
+DEFINE_LOG_CATEGORY(LogGameKitGAS);
+```
+
+---
+
+## 3. 关键字标记规范
+
+### [Constraint] 统一关键字
+
+| 功能模块 | 关键字格式 |
+|---------|-----------|
+| 属性保存/恢复 | `[SaveAttribute]`, `[RestoreAttribute]` |
+| 地图切换 | `[Travel]`, `[TravelStart]`, `[TravelEnd]` |
+| Ability授予 | `[GrantAbility]`, `[RemoveAbility]` |
+| 网络同步 | `[Replicate]`, `[OnRep]` |
+| RPC调用 | `[ServerRPC]`, `[ClientRPC]`, `[MulticastRPC]` |
+| 战斗系统 | `[Damage]`, `[Heal]`, `[Critical]` |
+| AI系统 | `[AIDecision]`, `[AIState]` |
+
+---
+
+## 4. UE_LOG 标准格式
+
+```cpp
+// 标准格式模板
+UE_LOG(LogCategory, Level, TEXT("[关键字] 消息内容: 参数值"));
+
+// 示例
+UE_LOG(LogGameKitGAS, Display, TEXT("[SaveAttribute] 开始保存 %d 个 AttributeSet"), Count);
+UE_LOG(LogGameKitNetwork, Display, TEXT("[ServerRPC] RequestTravel: MapName=%s"), *MapName);
+```
+
+---
+
+## 5. 日志级别
+
+| 级别 | 用途 |
+|-----|------|
+| `Verbose` | 详细调试信息（仅开发时） |
+| `Display` | 正常流程信息（默认使用） |
+| `Warning` | 警告但不影响功能 |
+| `Error` | 错误，功能受影响 |
+
+---
+
+## ✅ 检查清单
+
+- [ ] 为功能模块声明了独立的 LogCategory
+- [ ] 使用了统一的 `[关键字]` 标记
+- [ ] 关键节点都有日志（初始化、状态变化、错误处理）
+
+---
+
+**记住**：
+- 🎯 **统一使用 UE_LOG**
+- 🎯 **Category 分类**：每个功能模块独立
+- 🎯 **关键字标记**：同功能使用统一标记
+
+---
+
+**层级**: L2-UE5 | **最后更新**: 2026年2月
